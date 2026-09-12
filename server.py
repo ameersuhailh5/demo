@@ -28,7 +28,9 @@ DOCTORS = [
         "room": "Triage Bay 1",
         "available": True,
         "phone": "(555) 019-2831",
-        "email": "s.jenkins@clinic.org"
+        "email": "s.jenkins@clinic.org",
+        "treatmentType": "allopathy",
+        "treatmentModalityTitle": "Allopathy (Conventional)"
     },
     {
         "id": "doc-2",
@@ -39,7 +41,9 @@ DOCTORS = [
         "room": "Suite 1B",
         "available": True,
         "phone": "(555) 019-2832",
-        "email": "g.house@clinic.org"
+        "email": "g.house@clinic.org",
+        "treatmentType": "allopathy",
+        "treatmentModalityTitle": "Allopathy (Conventional)"
     },
     {
         "id": "doc-3",
@@ -50,7 +54,9 @@ DOCTORS = [
         "room": "Room 4A",
         "available": True,
         "phone": "(555) 019-2833",
-        "email": "a.patel@clinic.org"
+        "email": "a.patel@clinic.org",
+        "treatmentType": "allopathy",
+        "treatmentModalityTitle": "Allopathy (Conventional)"
     },
     {
         "id": "doc-4",
@@ -61,7 +67,9 @@ DOCTORS = [
         "room": "Room 2C",
         "available": True,
         "phone": "(555) 019-2834",
-        "email": "r.vance@clinic.org"
+        "email": "r.vance@clinic.org",
+        "treatmentType": "allopathy",
+        "treatmentModalityTitle": "Allopathy (Conventional)"
     },
     {
         "id": "doc-5",
@@ -72,7 +80,35 @@ DOCTORS = [
         "room": "Room 5B",
         "available": True,
         "phone": "(555) 019-2835",
-        "email": "e.rostova@clinic.org"
+        "email": "e.rostova@clinic.org",
+        "treatmentType": "allopathy",
+        "treatmentModalityTitle": "Allopathy (Conventional)"
+    },
+    {
+        "id": "doc-6",
+        "name": "Dr. Rajesh Sharma, BAMS, MD (Ayur)",
+        "title": "Senior Ayurvedic Vaidya & Specialist",
+        "specialty": "Ayurvedic Medicine, Dosha Balancing & Panchakarma",
+        "department": "Ayurvedic Medicine",
+        "room": "Ayurveda Suite 1A",
+        "available": True,
+        "phone": "(555) 019-2836",
+        "email": "r.sharma@clinic.org",
+        "treatmentType": "ayurveda",
+        "treatmentModalityTitle": "Ayurveda (Traditional Holistic)"
+    },
+    {
+        "id": "doc-7",
+        "name": "Dr. Ananya Nair, BAMS",
+        "title": "Ayurvedic Consultant & Herbalist",
+        "specialty": "Herbal Pharmacology, Nadi Pariksha & Lifestyle Care",
+        "department": "Ayurvedic Wellness & Dietetics",
+        "room": "Ayurveda Suite 2B",
+        "available": True,
+        "phone": "(555) 019-2837",
+        "email": "a.nair@clinic.org",
+        "treatmentType": "ayurveda",
+        "treatmentModalityTitle": "Ayurveda (Traditional Holistic)"
     }
 ]
 
@@ -274,10 +310,11 @@ def generate_fhir_bundle(patient):
     }
 
 def calculate_rule_based_triage(data):
-    """Clinical Emergency Severity Index (ESI) rule evaluation."""
+    """Clinical Emergency Severity Index (ESI) rule evaluation with multi-system care modality support."""
     pain = int(data.get("painLevel", 0))
     symptoms = [s.lower() for s in data.get("symptoms", [])]
     complaint = data.get("chiefComplaint", "").lower()
+    treatment_type = data.get("treatmentType", "allopathy")
 
     red_flags = [
         "chest pain", "shortness of breath", "numbness", "bleeding", "anaphylaxis",
@@ -290,24 +327,44 @@ def calculate_rule_based_triage(data):
     is_red = pain >= 8 or any(rf in complaint or any(rf in s for s in symptoms) for rf in red_flags)
     is_urgent = pain >= 6 or any(uf in complaint or any(uf in s for s in symptoms) for uf in urgent_flags)
 
+    # If severe acute trauma or red flag, safety protocols route to urgent care regardless of preference
     if is_red:
         esi = 2
         label = "Level 2 Emergent"
         room = "Triage Bay 1"
         dept = "Urgent Care"
         doc = DOCTORS[0]
+        vitals = ["Blood Pressure", "Heart Rate", "SpO2 Pulse Ox", "Temperature"]
+        summary = f"EMERGENT: Patient presents with {data.get('chiefComplaint', 'acute symptoms')}. Severe acute distress. Routed to Urgent Care."
+        notes = "Immediate vital signs and provider alert. Red-flag symptoms identified."
+    elif treatment_type == "ayurveda":
+        # Route to Ayurvedic Physician
+        esi = 3 if is_urgent else 4
+        label = "Level 3 Moderate (Ayurvedic)" if is_urgent else "Level 4 Routine (Ayurvedic)"
+        room = "Ayurveda Suite 1A" if esi == 3 else "Ayurveda Suite 2B"
+        dept = "Ayurvedic Medicine"
+        doc = DOCTORS[5] if esi == 3 else DOCTORS[6] # Dr. Rajesh Sharma or Dr. Ananya Nair
+        vitals = ["Blood Pressure", "Nadi Pariksha (Radial Pulse Rate & Rhythm)", "Agni / Digestive Assessment", "Weight"]
+        summary = f"Patient requested Traditional Ayurvedic Care for {data.get('chiefComplaint', 'symptom management')}. Pain: {pain}/10."
+        notes = "Conduct Dosha balance inquiry (Vata/Pitta/Kapha), review current herbal supplements and dietary habits."
     elif is_urgent:
         esi = 3
         label = "Level 3 Urgent"
         room = "Consultation Room 3"
         dept = "Internal Medicine"
         doc = DOCTORS[0]
+        vitals = ["Blood Pressure", "Heart Rate", "SpO2 Pulse Ox", "Temperature"]
+        summary = f"Patient presents with {data.get('chiefComplaint', 'unspecified complaint')}. Pain {pain}/10."
+        notes = "Obtain baseline vital signs. Verify allergies and active medications."
     else:
         esi = 4
         label = "Level 4 Less Urgent"
         room = "Exam Station 2"
         dept = "Family Practice"
         doc = DOCTORS[2]
+        vitals = ["Blood Pressure", "Heart Rate", "SpO2 Pulse Ox", "Temperature"]
+        summary = f"Patient presents with {data.get('chiefComplaint', 'unspecified complaint')}. Pain {pain}/10."
+        notes = "Obtain baseline vital signs. Verify allergies and active medications."
 
     return {
         "triageScore": esi,
@@ -316,9 +373,10 @@ def calculate_rule_based_triage(data):
         "recommendedDepartment": dept,
         "recommendedDoctor": doc["name"],
         "recommendedDoctorId": doc["id"],
-        "vitalsToCheck": ["Blood Pressure", "Heart Rate", "SpO2 Pulse Ox", "Temperature"],
-        "clinicalSummary": f"Patient presents with {data.get('chiefComplaint', 'unspecified complaint')}. Pain {pain}/10.",
-        "suggestedNursingNotes": "Obtain baseline vital signs. Verify allergies and active medications.",
+        "treatmentType": treatment_type,
+        "vitalsToCheck": vitals,
+        "clinicalSummary": summary,
+        "suggestedNursingNotes": notes,
         "source": "Python Clinical Triage Engine"
     }
 
@@ -328,9 +386,11 @@ def call_gemini_triage(data):
         return calculate_rule_based_triage(data)
 
     url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={GEMINI_API_KEY}"
+    treatment_type = data.get("treatmentType", "allopathy")
     
-    prompt = f"""You are a clinical triage AI for a clinic kiosk.
+    prompt = f"""You are a clinical triage AI for a clinic kiosk offering both Allopathic (modern conventional) and Ayurvedic (traditional holistic) medicine.
 Patient Name: {data.get('patientName', 'Patient')}
+Treatment System Requested: {treatment_type.upper()}
 Chief Complaint: {data.get('chiefComplaint')}
 Pain Scale (1-10): {data.get('painLevel')}
 Duration: {data.get('duration')}
@@ -338,11 +398,17 @@ Symptoms: {', '.join(data.get('symptoms', []))}
 Allergies: {', '.join(data.get('allergies', []))}
 
 Doctors Available:
-- Dr. Sarah Jenkins, MD (Urgent Care, Triage Bay 1)
-- Dr. Gregory House, MD (Pulmonology, Suite 1B)
-- Dr. Alisha Patel, DO (Family Practice, Room 4A)
-- Dr. Robert Vance, MD (Cardiology, Room 2C)
-- Dr. Elena Rostova, MD (Pediatrics, Room 5B)
+- Dr. Sarah Jenkins, MD (Allopathy - Urgent Care, Triage Bay 1, id: doc-1)
+- Dr. Gregory House, MD (Allopathy - Pulmonology, Suite 1B, id: doc-2)
+- Dr. Alisha Patel, DO (Allopathy - Family Practice, Room 4A, id: doc-3)
+- Dr. Robert Vance, MD (Allopathy - Cardiology, Room 2C, id: doc-4)
+- Dr. Elena Rostova, MD (Allopathy - Pediatrics, Room 5B, id: doc-5)
+- Dr. Rajesh Sharma, BAMS, MD (Ayur) (Ayurveda - Senior Ayurvedic Vaidya, Ayurveda Suite 1A, id: doc-6)
+- Dr. Ananya Nair, BAMS (Ayurveda - Ayurvedic Consultant & Herbology, Ayurveda Suite 2B, id: doc-7)
+
+Note:
+If the patient has acute life-threatening red flags (severe chest pain, stroke symptoms, major hemorrhaging), prioritize Allopathic emergency care (doc-1).
+Otherwise, honor their requested treatment modality ({treatment_type}). If they requested Ayurveda, recommend Dr. Rajesh Sharma or Dr. Ananya Nair in the Ayurveda Suites.
 
 Return ONLY a valid JSON object with:
 {{
@@ -350,11 +416,12 @@ Return ONLY a valid JSON object with:
   "urgencyCategory": "<e.g. Level 2 Emergent, Level 3 Urgent, Level 4 Routine>",
   "recommendedRoom": "<room name>",
   "recommendedDepartment": "<department name>",
-  "recommendedDoctor": "<one of the doctor names above>",
-  "recommendedDoctorId": "<doc-1 to doc-5>",
+  "recommendedDoctor": "<doctor name>",
+  "recommendedDoctorId": "<doc-1 to doc-7>",
+  "treatmentType": "{treatment_type}",
   "vitalsToCheck": ["Blood Pressure", "SpO2", "Heart Rate", "Temp"],
-  "clinicalSummary": "<concise SBAR summary>",
-  "suggestedNursingNotes": "<clinical precautions>"
+  "clinicalSummary": "<concise SBAR summary or Dosha evaluation>",
+  "suggestedNursingNotes": "<clinical precautions and intake advice>"
 }}"""
 
     payload = {
@@ -549,6 +616,51 @@ class RequestHandler(BaseHTTPRequestHandler):
                 "count": len(matches),
                 "results": matches
             })
+        elif path == "/api/auth/login":
+            username = body.get("username", "").strip().lower()
+            password = body.get("password", "").strip()
+            requested_role = body.get("role", "").strip().lower()  # "admin" or "doctor"
+
+            # Admin authentication
+            if requested_role == "admin" or username in ["admin", "administrator"]:
+                if password in ["admin123", "admin", "9999", "medikiosk"]:
+                    token = hashlib.sha256(f"admin-{time.time()}".encode("utf-8")).hexdigest()[:24]
+                    user = {
+                        "id": "admin-1",
+                        "username": "admin",
+                        "name": "Clinic Administrator",
+                        "role": "admin",
+                        "title": "Hospital System Administrator",
+                        "token": f"bearer_{token}"
+                    }
+                    self._send_json(200, {"success": True, "user": user})
+                    return
+                else:
+                    self._send_json(401, {"success": False, "message": "Invalid admin password. Default is: admin123"})
+                    return
+
+            # Doctor authentication
+            if requested_role == "doctor" or username in ["doctor", "doc"] or any(d["id"] == username for d in DOCTORS):
+                if password in ["doc123", "doctor", "1234", "physician"]:
+                    target_doc = next((d for d in DOCTORS if d["id"] == username or username in d["name"].lower()), DOCTORS[0])
+                    token = hashlib.sha256(f"doctor-{time.time()}".encode("utf-8")).hexdigest()[:24]
+                    user = {
+                        "id": target_doc["id"],
+                        "username": target_doc["id"],
+                        "name": target_doc["name"],
+                        "role": "doctor",
+                        "doctorId": target_doc["id"],
+                        "department": target_doc["department"],
+                        "title": target_doc["title"],
+                        "token": f"bearer_{token}"
+                    }
+                    self._send_json(200, {"success": True, "user": user})
+                    return
+                else:
+                    self._send_json(401, {"success": False, "message": "Invalid physician password. Default is: doc123"})
+                    return
+
+            self._send_json(401, {"success": False, "message": "Invalid credentials or unauthorized role."})
         elif path == "/api/audit-logs":
             new_log = {
                 "id": f"log-{int(time.time()*1000)}",

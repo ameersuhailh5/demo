@@ -1,6 +1,6 @@
 {
   "name": "MediKiosk",
-  "description": "Intelligent clinic patient registration and automated check-in kiosk with AI triage and secure medical record integration.",
+  "description": "Intelligent clinic patient registration and walk-in intake kiosk with AI triage and secure medical record integration.",
   "requestFramePermissions": ["camera"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

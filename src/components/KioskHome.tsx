@@ -1,19 +1,20 @@
 import React from "react";
 import { Language } from "../types";
 import {
-  QrCode,
   UserPlus,
   Clock,
   FileCheck,
   ChevronRight,
   Shield,
   Sparkles,
-  Calendar,
+  Leaf,
+  Pill,
+  Activity,
+  HeartPulse,
 } from "lucide-react";
 
 interface KioskHomeProps {
   language: Language;
-  onStartCheckIn: (presetCode?: string) => void;
   onStartWalkIn: () => void;
   onViewQueue: () => void;
   onUpdateRecords: () => void;
@@ -23,7 +24,6 @@ interface KioskHomeProps {
 
 export const KioskHome: React.FC<KioskHomeProps> = ({
   language,
-  onStartCheckIn,
   onStartWalkIn,
   onViewQueue,
   onUpdateRecords,
@@ -32,67 +32,49 @@ export const KioskHome: React.FC<KioskHomeProps> = ({
 }) => {
   const content = {
     en: {
-      welcome: "MetroHealth Clinic Check-In",
-      subtitle: "Select a self-service option below to begin.",
-      scheduledTitle: "Appointment Check-In",
-      scheduledDesc: "Fast check-in via QR code, phone number, or confirmation ID.",
-      scheduledBadge: "Fastest • ~45s",
-      walkinTitle: "Walk-In Registration",
-      walkinDesc: "Express symptom intake & triage for patients without an appointment.",
-      walkinBadge: "Express Intake",
-      queueTitle: "Live Queue Status",
-      queueDesc: "View currently called tickets and estimated wait times.",
-      recordsTitle: "Update Records",
-      recordsDesc: "Scan insurance cards and update patient contact details.",
-      quickTryTitle: "Demo Quick-Select:",
-      patient1: "Eleanor Vance (Ref: MK-101)",
-      patient2: "Marcus Rodriguez (Ref: MK-102)",
+      welcome: "MetroHealth Clinic Registration",
+      subtitle: "Welcome to our self-service intake kiosk. Please begin your walk-in registration below.",
+      walkinTitle: "Walk-In Patient Registration",
+      walkinDesc: "Express symptom intake & clinical triage. Choose between Allopathy and Ayurvedic care systems.",
+      walkinBadge: "Direct Care Intake",
+      queueTitle: "Live Waiting Room Queue",
+      queueDesc: "View currently called tickets, active rooms, and estimated wait times.",
+      recordsTitle: "Update Records & Insurance",
+      recordsDesc: "Scan insurance cards, verify policy coverage, and update contact details.",
       hipaaBadge: "HIPAA Compliant & HL7 FHIR R4 Encrypted",
     },
     es: {
       welcome: "Registro MetroHealth Clinic",
-      subtitle: "Seleccione una opción a continuación para comenzar.",
-      scheduledTitle: "Registrar Cita",
-      scheduledDesc: "Registro rápido con código QR, teléfono o código de confirmación.",
-      scheduledBadge: "Rápido • ~45s",
-      walkinTitle: "Paciente Sin Cita",
-      walkinDesc: "Evaluación inicial y triaje clínico para pacientes sin cita previa.",
-      walkinBadge: "Ingreso Exprés",
-      queueTitle: "Fila en Vivo",
-      queueDesc: "Consulte tickets llamados y tiempo de espera estimado.",
-      recordsTitle: "Actualizar Expediente",
-      recordsDesc: "Escanee su tarjeta de seguro y actualice sus datos.",
-      quickTryTitle: "Citas de demostración:",
-      patient1: "Eleanor Vance (Ref: MK-101)",
-      patient2: "Marcus Rodriguez (Ref: MK-102)",
+      subtitle: "Bienvenido al quiosco de recepción. Inicie su registro de paciente a continuación.",
+      walkinTitle: "Registro de Paciente Sin Cita",
+      walkinDesc: "Evaluación inicial y triaje clínico. Elija entre medicina Alopática o Ayurvédica.",
+      walkinBadge: "Ingreso Directo",
+      queueTitle: "Fila de Espera en Vivo",
+      queueDesc: "Consulte tickets llamados, salas de consulta y tiempo de espera estimado.",
+      recordsTitle: "Actualizar Expediente y Seguro",
+      recordsDesc: "Escanee su tarjeta de seguro y actualice sus datos de contacto.",
       hipaaBadge: "Conforme a HIPAA y Cifrado FHIR R4",
     },
     zh: {
-      welcome: "美普健康诊所 自助签到",
-      subtitle: "请选择下方服务选项开始登记：",
-      scheduledTitle: "预约患者快速签到",
-      scheduledDesc: "使用二维码、电话或确认码快速完成到诊签到。",
-      scheduledBadge: "极速 • 约45秒",
-      walkinTitle: "现场门诊无预约登记",
-      walkinDesc: "无预约患者快速录入症状并进行智能分诊排队。",
-      walkinBadge: "快速分诊",
-      queueTitle: "实时候诊排队",
-      queueDesc: "查看当前呼叫号码及预计候诊时长。",
-      recordsTitle: "更新医保与资料",
-      recordsDesc: "扫描医保卡并核对个人联系方式与知情同意书。",
-      quickTryTitle: "测试预约快捷入口：",
-      patient1: "Eleanor Vance (预约码: MK-101)",
-      patient2: "Marcus Rodriguez (预约码: MK-102)",
+      welcome: "美普健康诊所 自助就医登记",
+      subtitle: "欢迎使用自助分诊终端。请在下方开始您的现场登记：",
+      walkinTitle: "现场门诊患者登记",
+      walkinDesc: "快速录入症状并进行分诊。支持现代常规诊疗（西医）与传统阿育吠陀疗法。",
+      walkinBadge: "现场快速登记",
+      queueTitle: "实时候诊排队大屏",
+      queueDesc: "查看当前呼叫号码、各科诊室与预计候诊时长。",
+      recordsTitle: "更新医保与档案",
+      recordsDesc: "扫描医保卡，核实参保信息与更新紧急联系电话。",
       hipaaBadge: "符合HIPAA规范与HL7 FHIR R4加密标准",
     },
   }[language];
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-6 sm:py-10">
+    <div className="max-w-4xl mx-auto px-4 py-6 sm:py-10">
       {/* Header Banner */}
       <div className="text-center mb-8 sm:mb-10">
         <div
-          className="inline-flex items-center gap-2 text-xs font-bold px-3 py-1 rounded-full mb-3 border shadow-2xs"
+          className="inline-flex items-center gap-2 text-xs font-bold px-3.5 py-1.5 rounded-full mb-3 border shadow-2xs"
           style={{
             backgroundColor: "#f0fdfa",
             color: "#5AA7A7",
@@ -100,7 +82,7 @@ export const KioskHome: React.FC<KioskHomeProps> = ({
           }}
         >
           <Sparkles className="w-3.5 h-3.5" style={{ color: "#5AA7A7" }} />
-          <span>Python AI Triage & FHIR Integration</span>
+          <span>Intelligent Care Routing • Allopathy & Ayurveda</span>
         </div>
         <h1 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
           {content.welcome}
@@ -130,216 +112,149 @@ export const KioskHome: React.FC<KioskHomeProps> = ({
         </div>
       </div>
 
-      {/* 2x2 Action Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6 mb-8">
-        {/* Card 1: Check In */}
-        <button
-          id="btn-kiosk-scheduled-checkin"
-          onClick={() => onStartCheckIn()}
-          className="group text-left relative text-white p-6 sm:p-8 rounded-2xl shadow-lg border transition-all duration-200 transform hover:-translate-y-0.5 active:translate-y-0 flex flex-col justify-between min-h-[210px]"
-          style={{
-            background: "linear-gradient(135deg, #5AA7A7 0%, #4f9696 100%)",
-            borderColor: "#96D7C6",
-          }}
-        >
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-14 h-14 rounded-xl bg-white/20 backdrop-blur-xs flex items-center justify-center text-white">
-                <QrCode className="w-8 h-8 text-white" />
-              </div>
-              <span
-                className="text-slate-900 text-xs font-bold px-2.5 py-1 rounded-full shadow-xs"
-                style={{ backgroundColor: "#96D7C6" }}
-              >
-                {content.scheduledBadge}
-              </span>
-            </div>
-            <h2 className="text-2xl font-bold text-white mb-2">
-              {content.scheduledTitle}
-            </h2>
-            <p className="text-teal-50 text-xs sm:text-sm leading-relaxed">
-              {content.scheduledDesc}
-            </p>
-          </div>
-
-          <div className="mt-5 flex items-center justify-between text-xs sm:text-sm font-bold pt-4 border-t border-white/20">
-            <span>Touch to Check In</span>
-            <div
-              className="w-8 h-8 rounded-full flex items-center justify-center group-hover:translate-x-1 transition-transform"
-              style={{ backgroundColor: "#ffffff", color: "#5AA7A7" }}
-            >
-              <ChevronRight className="w-5 h-5" />
-            </div>
-          </div>
-        </button>
-
-        {/* Card 2: Walk-In Registration */}
+      {/* Main Registration Hero Card */}
+      <div className="mb-6">
         <button
           id="btn-kiosk-walkin-registration"
           onClick={onStartWalkIn}
-          className="group text-left relative text-white p-6 sm:p-8 rounded-2xl shadow-lg border transition-all duration-200 transform hover:-translate-y-0.5 active:translate-y-0 flex flex-col justify-between min-h-[210px]"
+          className="w-full text-left relative text-white p-7 sm:p-9 rounded-3xl shadow-xl border transition-all duration-200 transform hover:-translate-y-1 active:translate-y-0 cursor-pointer overflow-hidden group"
           style={{
-            background: "linear-gradient(135deg, #6C8CBF 0%, #5d7cb0 100%)",
-            borderColor: "#BAC94A",
+            background: "linear-gradient(135deg, #4f9696 0%, #5AA7A7 40%, #6C8CBF 100%)",
+            borderColor: "#96D7C6",
           }}
         >
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-14 h-14 rounded-xl bg-white/20 backdrop-blur-xs flex items-center justify-center text-white">
-                <UserPlus className="w-8 h-8 text-white" />
-              </div>
-              <span
-                className="text-slate-900 text-xs font-bold px-2.5 py-1 rounded-full shadow-xs"
-                style={{ backgroundColor: "#BAC94A" }}
-              >
-                {content.walkinBadge}
-              </span>
-            </div>
-            <h2 className="text-2xl font-bold text-white mb-2">
-              {content.walkinTitle}
-            </h2>
-            <p className="text-blue-50 text-xs sm:text-sm leading-relaxed">
-              {content.walkinDesc}
-            </p>
-          </div>
+          {/* Subtle background glow */}
+          <div className="absolute top-0 right-0 w-80 h-80 bg-white/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20"></div>
 
-          <div className="mt-5 flex items-center justify-between text-xs sm:text-sm font-bold pt-4 border-t border-white/20">
-            <span>Start Walk-In Registration</span>
-            <div
-              className="w-8 h-8 rounded-full flex items-center justify-center group-hover:translate-x-1 transition-transform"
-              style={{ backgroundColor: "#ffffff", color: "#6C8CBF" }}
-            >
-              <ChevronRight className="w-5 h-5" />
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="max-w-xl">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white shadow-inner">
+                  <UserPlus className="w-7 h-7 text-white" />
+                </div>
+                <div>
+                  <span
+                    className="text-slate-900 text-xs font-black px-3 py-1 rounded-full shadow-xs uppercase tracking-wide inline-block"
+                    style={{ backgroundColor: "#BAC94A" }}
+                  >
+                    {content.walkinBadge}
+                  </span>
+                  <div className="text-teal-100 text-xs mt-0.5 font-medium">
+                    Self-Service Arrival & Rapid Triage
+                  </div>
+                </div>
+              </div>
+
+              <h2 className="text-2xl sm:text-3xl font-black text-white mb-2 tracking-tight">
+                {content.walkinTitle}
+              </h2>
+              <p className="text-teal-50 text-sm sm:text-base leading-relaxed mb-4">
+                {content.walkinDesc}
+              </p>
+
+              {/* Supported Modalities Pill Indicator */}
+              <div className="flex flex-wrap items-center gap-2 text-xs">
+                <span className="inline-flex items-center gap-1 bg-white/20 backdrop-blur-xs px-2.5 py-1 rounded-lg text-white font-semibold">
+                  <Pill className="w-3.5 h-3.5 text-teal-200" />
+                  <span>Allopathy (Conventional Care)</span>
+                </span>
+                <span className="inline-flex items-center gap-1 bg-white/20 backdrop-blur-xs px-2.5 py-1 rounded-lg text-white font-semibold">
+                  <Leaf className="w-3.5 h-3.5 text-emerald-200" />
+                  <span>Ayurvedic Medicine & Panchakarma</span>
+                </span>
+              </div>
+            </div>
+
+            <div className="flex sm:flex-col items-center justify-between sm:justify-center gap-3 border-t md:border-t-0 md:border-l border-white/20 pt-4 md:pt-0 md:pl-6">
+              <div
+                className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-md group-hover:scale-110 group-hover:translate-x-1 transition-all duration-200"
+                style={{ backgroundColor: "#ffffff", color: "#4f9696" }}
+              >
+                <ChevronRight className="w-7 h-7" />
+              </div>
+              <span className="text-xs font-bold text-white tracking-wide">
+                Touch to Begin
+              </span>
             </div>
           </div>
         </button>
+      </div>
 
-        {/* Card 3: Live Queue Tracker */}
+      {/* Secondary Action Cards (2 Columns) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-8">
+        {/* Card 1: Live Queue Monitor */}
         <button
           id="btn-kiosk-queue-tracker"
           onClick={onViewQueue}
-          className="group text-left relative bg-white hover:bg-slate-50 text-slate-900 p-5 sm:p-6 rounded-2xl shadow-xs border transition-all duration-200 transform hover:-translate-y-0.5 active:translate-y-0 flex flex-col justify-between"
+          className="group text-left relative bg-white hover:bg-slate-50 text-slate-900 p-6 rounded-2xl shadow-xs border transition-all duration-200 transform hover:-translate-y-0.5 active:translate-y-0 flex flex-col justify-between cursor-pointer"
           style={{ borderColor: "#BAC94A" }}
         >
           <div>
             <div className="flex items-center justify-between mb-3">
               <div
-                className="w-11 h-11 rounded-xl flex items-center justify-center"
+                className="w-12 h-12 rounded-xl flex items-center justify-center"
                 style={{ backgroundColor: "#fbfdec", color: "#BAC94A" }}
               >
                 <Clock className="w-6 h-6" style={{ color: "#8a962b" }} />
               </div>
               <span
-                className="text-[11px] font-bold px-2 py-0.5 rounded-md"
+                className="text-xs font-bold px-2.5 py-1 rounded-full"
                 style={{ backgroundColor: "#fef9c3", color: "#854d0e" }}
               >
-                Live Updates
+                Live Monitor
               </span>
             </div>
             <h3 className="text-lg font-bold text-slate-900 mb-1">
               {content.queueTitle}
             </h3>
-            <p className="text-slate-600 text-xs">{content.queueDesc}</p>
+            <p className="text-slate-600 text-xs leading-relaxed">{content.queueDesc}</p>
           </div>
 
           <div
-            className="mt-4 flex items-center justify-between text-xs font-bold"
+            className="mt-5 flex items-center justify-between text-xs font-bold pt-3 border-t border-slate-100"
             style={{ color: "#5AA7A7" }}
           >
-            <span>View Calling Monitor</span>
+            <span>View Calling Screen</span>
             <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </div>
         </button>
 
-        {/* Card 4: Records & Insurance */}
+        {/* Card 2: Records & Insurance */}
         <button
           id="btn-kiosk-records-update"
           onClick={onUpdateRecords}
-          className="group text-left relative bg-white hover:bg-slate-50 text-slate-900 p-5 sm:p-6 rounded-2xl shadow-xs border transition-all duration-200 transform hover:-translate-y-0.5 active:translate-y-0 flex flex-col justify-between"
+          className="group text-left relative bg-white hover:bg-slate-50 text-slate-900 p-6 rounded-2xl shadow-xs border transition-all duration-200 transform hover:-translate-y-0.5 active:translate-y-0 flex flex-col justify-between cursor-pointer"
           style={{ borderColor: "#96D7C6" }}
         >
           <div>
             <div className="flex items-center justify-between mb-3">
               <div
-                className="w-11 h-11 rounded-xl flex items-center justify-center"
+                className="w-12 h-12 rounded-xl flex items-center justify-center"
                 style={{ backgroundColor: "#f0fdf9", color: "#5AA7A7" }}
               >
                 <FileCheck className="w-6 h-6" style={{ color: "#5AA7A7" }} />
               </div>
               <span
-                className="text-[11px] font-bold px-2 py-0.5 rounded-md"
+                className="text-xs font-bold px-2.5 py-1 rounded-full"
                 style={{ backgroundColor: "#e0f2fe", color: "#0369a1" }}
               >
-                Card & Consent
+                Card & Insurance
               </span>
             </div>
             <h3 className="text-lg font-bold text-slate-900 mb-1">
               {content.recordsTitle}
             </h3>
-            <p className="text-slate-600 text-xs">{content.recordsDesc}</p>
+            <p className="text-slate-600 text-xs leading-relaxed">{content.recordsDesc}</p>
           </div>
 
           <div
-            className="mt-4 flex items-center justify-between text-xs font-bold"
+            className="mt-5 flex items-center justify-between text-xs font-bold pt-3 border-t border-slate-100"
             style={{ color: "#6C8CBF" }}
           >
             <span>Update Information</span>
             <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </div>
         </button>
-      </div>
-
-      {/* Demo Quick-Select Bar */}
-      <div
-        className="rounded-xl p-4 sm:p-5 mb-8 border"
-        style={{
-          backgroundColor: "#fbfbfe",
-          borderColor: "#e2e8f0",
-        }}
-      >
-        <div className="flex items-center gap-2 text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-          <Calendar className="w-4 h-4" style={{ color: "#5AA7A7" }} />
-          <span>{content.quickTryTitle}</span>
-        </div>
-        <div className="flex flex-wrap gap-2.5">
-          <button
-            id="btn-demo-checkin-eleanor"
-            onClick={() => onStartCheckIn("MK-101")}
-            className="inline-flex items-center gap-2 bg-white hover:bg-slate-50 border px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-800 shadow-2xs transition-all"
-            style={{ borderColor: "#96D7C6" }}
-          >
-            <span
-              className="w-2 h-2 rounded-full"
-              style={{ backgroundColor: "#BAC94A" }}
-            ></span>
-            <span>{content.patient1}</span>
-            <span
-              className="px-1.5 py-0.5 rounded text-[10px] font-bold"
-              style={{ backgroundColor: "#f0fdf9", color: "#5AA7A7" }}
-            >
-              Test Check-In
-            </span>
-          </button>
-
-          <button
-            id="btn-demo-checkin-marcus"
-            onClick={() => onStartCheckIn("MK-102")}
-            className="inline-flex items-center gap-2 bg-white hover:bg-slate-50 border px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-800 shadow-2xs transition-all"
-            style={{ borderColor: "#6C8CBF" }}
-          >
-            <span
-              className="w-2 h-2 rounded-full"
-              style={{ backgroundColor: "#BAC94A" }}
-            ></span>
-            <span>{content.patient2}</span>
-            <span
-              className="px-1.5 py-0.5 rounded text-[10px] font-bold"
-              style={{ backgroundColor: "#eef2ff", color: "#6C8CBF" }}
-            >
-              Test Check-In
-            </span>
-          </button>
-        </div>
       </div>
 
       {/* Security & HIPAA Footer */}
@@ -349,9 +264,9 @@ export const KioskHome: React.FC<KioskHomeProps> = ({
           <span>{content.hipaaBadge}</span>
         </div>
         <div className="flex items-center gap-4 text-slate-400">
-          <span>Kiosk #04</span>
+          <span>Kiosk Station #04</span>
           <span>•</span>
-          <span>Assistance: Reception desk on right</span>
+          <span>Staff Assistance: Reception Desk</span>
         </div>
       </div>
     </div>

@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import { QueueItem, TriageEvaluation, Language, PatientRecord } from "../types";
+import { QueueItem, TriageEvaluation, Language, PatientRecord, TreatmentType } from "../types";
 import { COMMON_SYMPTOMS, INSURANCE_PROVIDERS } from "../data/mockData";
 import {
   Activity,
@@ -13,6 +13,9 @@ import {
   Camera,
   HeartPulse,
   RotateCcw,
+  Leaf,
+  Pill,
+  Stethoscope,
 } from "lucide-react";
 import { playSuccessChime, playButtonTap } from "../utils/audio";
 
@@ -38,7 +41,9 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
   const [emergencyName, setEmergencyName] = useState("");
   const [emergencyPhone, setEmergencyPhone] = useState("");
 
-  // Step 2: Symptoms & Pain
+  // Step 2: Treatment Modality & Symptoms
+  const [treatmentType, setTreatmentType] = useState<TreatmentType>("allopathy");
+  const [ayurvedicFocus, setAyurvedicFocus] = useState<string>("Holistic & Preventive Care");
   const [chiefComplaint, setChiefComplaint] = useState("");
   const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
   const [painLevel, setPainLevel] = useState<number>(3);
@@ -161,7 +166,8 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
         body: JSON.stringify({
           patientName: `${firstName} ${lastName}`.trim() || "Walk-In Patient",
           age: dob ? Math.floor((Date.now() - new Date(dob).getTime()) / (365.25 * 24 * 3600 * 1000)) : 35,
-          chiefComplaint: chiefComplaint || "General malaise",
+          treatmentType,
+          chiefComplaint: chiefComplaint || (treatmentType === "ayurveda" ? "Ayurvedic consultation" : "General malaise"),
           painLevel,
           duration,
           symptoms: selectedSymptoms,
@@ -174,24 +180,34 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
       if (data.success) {
         setTriageResult({
           triageScore: data.triageScore || 3,
-          urgencyCategory: data.urgencyCategory || "Level 3 Urgent",
-          recommendedRoom: data.recommendedRoom || "Triage Bay 2",
-          vitalsToCheck: data.vitalsToCheck || ["Blood Pressure", "Heart Rate", "SpO2"],
+          urgencyCategory: data.urgencyCategory || (treatmentType === "ayurveda" ? "Ayurvedic Consultation" : "Level 3 Urgent"),
+          recommendedRoom: data.recommendedRoom || (treatmentType === "ayurveda" ? "Ayurveda Suite 1A" : "Triage Bay 2"),
+          vitalsToCheck: data.vitalsToCheck || (treatmentType === "ayurveda" ? ["Blood Pressure", "Nadi Pariksha (Pulse)", "Agni Exam"] : ["Blood Pressure", "Heart Rate", "SpO2"]),
           clinicalSummary: data.clinicalSummary || "Intake completed.",
           suggestedNursingNotes: data.suggestedNursingNotes || "Standard intake protocol.",
-          source: data.source || "Python Gemini AI",
+          source: data.source || "Python Clinical Engine",
+          treatmentType,
         });
       }
     } catch {
       const isRedFlag = painLevel >= 8 || selectedSymptoms.includes("Chest Discomfort / Pressure");
+      const isAyur = treatmentType === "ayurveda" && !isRedFlag;
+
       setTriageResult({
         triageScore: isRedFlag ? 2 : painLevel >= 5 ? 3 : 4,
-        urgencyCategory: isRedFlag ? "Level 2 Emergent" : painLevel >= 5 ? "Level 3 Urgent" : "Level 4 Less Urgent",
-        recommendedRoom: isRedFlag ? "Triage Bay 1 (High Priority)" : "Exam Room 2",
-        vitalsToCheck: ["Blood Pressure", "Pulse Oximetry", "Temperature", "Heart Rate"],
-        clinicalSummary: `Patient presents with ${chiefComplaint || "acute complaint"} (pain ${painLevel}/10).`,
-        suggestedNursingNotes: "Assess baseline vitals and allergy reconciliation.",
+        urgencyCategory: isRedFlag ? "Level 2 Emergent" : isAyur ? "Ayurvedic Consultation" : painLevel >= 5 ? "Level 3 Urgent" : "Level 4 Less Urgent",
+        recommendedRoom: isRedFlag ? "Triage Bay 1 (High Priority)" : isAyur ? "Ayurveda Suite 1A" : "Exam Room 2",
+        vitalsToCheck: isAyur
+          ? ["Blood Pressure", "Nadi Pariksha (Radial Pulse)", "Agni & Tongue Inspection", "Temperature"]
+          : ["Blood Pressure", "Pulse Oximetry", "Temperature", "Heart Rate"],
+        clinicalSummary: isAyur
+          ? `Patient requested Ayurvedic Traditional Care for: ${chiefComplaint || "holistic wellness"}. Focus: ${ayurvedicFocus}.`
+          : `Patient presents with ${chiefComplaint || "acute complaint"} (pain ${painLevel}/10).`,
+        suggestedNursingNotes: isAyur
+          ? "Examine Dosha constitution (Vata/Pitta/Kapha). Review herbal preparations and dietary adherence."
+          : "Assess baseline vitals and allergy reconciliation.",
         source: "Python Clinical Protocol Engine",
+        treatmentType,
       });
     } finally {
       setIsAnalyzingAI(false);
@@ -202,13 +218,28 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
     playSuccessChime();
 
     const randomMRN = `MRN-${Math.floor(10000 + Math.random() * 90000)}`;
-    const randomTicket = `W-${Math.floor(200 + Math.random() * 799)}`;
+    const randomTicket = treatmentType === "ayurveda"
+      ? `AY-${Math.floor(100 + Math.random() * 899)}`
+      : `W-${Math.floor(200 + Math.random() * 799)}`;
     const nowTime = new Date().toLocaleTimeString([], {
       hour: "2-digit",
       minute: "2-digit",
     });
 
     const isUrgent = (triageResult?.triageScore || 3) <= 2;
+    const isAyur = treatmentType === "ayurveda";
+
+    const assignedDoc = isAyur
+      ? "Dr. Rajesh Sharma, BAMS, MD (Ayur)"
+      : isUrgent
+      ? "Dr. Sarah Jenkins, MD"
+      : "Dr. Alisha Patel, DO";
+
+    const assignedDept = isAyur
+      ? "Ayurvedic Medicine & Panchakarma"
+      : "Urgent Care & Walk-In";
+
+    const assignedRoom = triageResult?.recommendedRoom || (isAyur ? "Ayurveda Suite 1A" : "Triage Bay 2");
 
     const newQueueItem: QueueItem = {
       id: `q-${Date.now()}`,
@@ -216,20 +247,21 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
       patientName: `${firstName} ${lastName}`.trim(),
       mrn: randomMRN,
       checkInTime: nowTime,
-      doctorName: isUrgent ? "Dr. Sarah Jenkins, MD" : "Dr. Alisha Patel, DO",
-      department: "Urgent Care & Walk-In",
-      assignedRoom: triageResult?.recommendedRoom || "Triage Bay 2",
+      doctorName: assignedDoc,
+      department: assignedDept,
+      assignedRoom,
       status: "waiting",
       type: "walk_in",
       urgency: isUrgent ? "urgent" : "moderate",
       esiScore: triageResult?.triageScore || 3,
-      chiefComplaint: chiefComplaint || "General health concern",
+      chiefComplaint: chiefComplaint || (isAyur ? "Ayurvedic Consultation & Dosha Assessment" : "General health concern"),
       painLevel,
       symptoms: selectedSymptoms,
       triageEvaluation: triageResult || undefined,
       insuranceVerified: true,
       signatureCompleted: true,
-      estimatedWaitMinutes: isUrgent ? 4 : 14,
+      estimatedWaitMinutes: isUrgent ? 4 : isAyur ? 10 : 14,
+      treatmentType,
     };
 
     const newPatient: PatientRecord = {
@@ -242,6 +274,7 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
       phone,
       email,
       address: "Walk-in Patient",
+      preferredTreatment: treatmentType,
       emergencyContact: {
         name: emergencyName || "Not provided",
         relationship: "Family",
@@ -464,10 +497,144 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
         {currentStep === 2 && (
           <div className="space-y-4">
             <div>
-              <h2 className="text-xl font-bold text-slate-900">Symptoms & Pain</h2>
+              <h2 className="text-xl font-bold text-slate-900">Treatment Modality & Symptoms</h2>
               <p className="text-xs text-slate-500">
-                Describe your current symptoms for triage evaluation.
+                Choose your preferred medical system (Ayurveda or Allopathy) and describe your symptoms.
               </p>
+            </div>
+
+            {/* Treatment System Selection */}
+            <div className="space-y-2">
+              <label className="block text-xs font-bold text-slate-800">
+                <span>Select Medical Care System *</span>
+              </label>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* Allopathy Card */}
+                <button
+                  type="button"
+                  id="btn-modality-allopathy"
+                  onClick={() => {
+                    playButtonTap();
+                    setTreatmentType("allopathy");
+                  }}
+                  className={`text-left p-3.5 rounded-xl border-2 transition-all relative cursor-pointer ${
+                    treatmentType === "allopathy"
+                      ? "border-teal-600 bg-teal-50/70 shadow-xs"
+                      : "border-slate-200 hover:border-slate-300 bg-white"
+                  }`}
+                >
+                  <div className="flex items-start justify-between mb-1.5">
+                    <div className="flex items-center gap-2.5">
+                      <div
+                        className="w-8 h-8 rounded-lg flex items-center justify-center text-white"
+                        style={{ backgroundColor: "#5AA7A7" }}
+                      >
+                        <Pill className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-slate-900 text-xs">Allopathy</h4>
+                        <span className="text-[10px] font-semibold block" style={{ color: "#5AA7A7" }}>
+                          Conventional Western Medicine
+                        </span>
+                      </div>
+                    </div>
+                    {treatmentType === "allopathy" && (
+                      <CheckCircle2 className="w-4 h-4" style={{ color: "#5AA7A7" }} />
+                    )}
+                  </div>
+                  <p className="text-[11px] text-slate-600 leading-relaxed">
+                    Evidence-based diagnostics, urgent care triage, laboratory panels, and conventional pharmacotherapy.
+                  </p>
+                  <div className="mt-2 text-[10px] text-slate-500 font-medium">
+                    Attending: Dr. Sarah Jenkins, MD • Dr. Gregory House, MD
+                  </div>
+                </button>
+
+                {/* Ayurveda Card */}
+                <button
+                  type="button"
+                  id="btn-modality-ayurveda"
+                  onClick={() => {
+                    playButtonTap();
+                    setTreatmentType("ayurveda");
+                    if (!chiefComplaint) {
+                      setChiefComplaint("Ayurvedic consultation & Dosha constitution assessment");
+                    }
+                  }}
+                  className={`text-left p-3.5 rounded-xl border-2 transition-all relative cursor-pointer ${
+                    treatmentType === "ayurveda"
+                      ? "border-emerald-600 bg-emerald-50/70 shadow-xs"
+                      : "border-slate-200 hover:border-slate-300 bg-white"
+                  }`}
+                >
+                  <div className="flex items-start justify-between mb-1.5">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center text-white">
+                        <Leaf className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-slate-900 text-xs">Ayurveda</h4>
+                        <span className="text-[10px] text-emerald-700 font-semibold block">
+                          Traditional Holistic Medicine
+                        </span>
+                      </div>
+                    </div>
+                    {treatmentType === "ayurveda" && (
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    )}
+                  </div>
+                  <p className="text-[11px] text-slate-600 leading-relaxed">
+                    Natural herbal remedies, Dosha balance assessment (Vata / Pitta / Kapha), dietetics, and Panchakarma rejuvenation.
+                  </p>
+                  <div className="mt-2 text-[10px] text-emerald-700 font-medium">
+                    Attending: Dr. Rajesh Sharma, BAMS, MD (Ayur) • Dr. Ananya Nair, BAMS
+                  </div>
+                </button>
+              </div>
+
+              {/* Ayurvedic Sub-Focus Selector */}
+              {treatmentType === "ayurveda" && (
+                <div className="bg-emerald-50/80 border border-emerald-200 p-3 rounded-xl space-y-2 mt-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-emerald-950 flex items-center gap-1.5">
+                      <Leaf className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>Ayurvedic Focus Area:</span>
+                    </span>
+                    <span className="text-[10px] font-semibold text-emerald-800 bg-white px-2 py-0.5 rounded-full border border-emerald-200">
+                      Ayurveda Suite 1A / 2B
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {[
+                      "Digestion & Metabolism (Agni)",
+                      "Joint & Musculoskeletal (Vata)",
+                      "Stress, Sleep & Mind (Manas)",
+                      "Skin, Blood & Heat (Pitta)",
+                      "Respiratory & Immunity (Kapha)",
+                      "Detox & Panchakarma",
+                      "General Holistic Checkup",
+                    ].map((focus) => (
+                      <button
+                        key={focus}
+                        type="button"
+                        onClick={() => {
+                          playButtonTap();
+                          setAyurvedicFocus(focus);
+                          setChiefComplaint(`Ayurvedic Consultation: ${focus}`);
+                        }}
+                        className={`text-[11px] px-2.5 py-1 rounded-lg border transition-all cursor-pointer ${
+                          ayurvedicFocus === focus
+                            ? "bg-emerald-700 text-white border-emerald-800 font-semibold"
+                            : "bg-white text-emerald-800 border-emerald-200 hover:bg-emerald-100/50"
+                        }`}
+                      >
+                        {focus}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div>
@@ -479,7 +646,11 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
                 rows={2}
                 value={chiefComplaint}
                 onChange={(e) => setChiefComplaint(e.target.value)}
-                placeholder="e.g., Right ankle swelling after misstep on stairs"
+                placeholder={
+                  treatmentType === "ayurveda"
+                    ? "e.g., Sluggish digestion, bloating, joint stiffness, chronic stress"
+                    : "e.g., Right ankle swelling after misstep on stairs, migraine, cough"
+                }
                 className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs focus:outline-none focus:bg-white"
               />
             </div>
@@ -894,18 +1065,42 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
                       <span className="font-bold text-xs text-slate-900">
                         {triageResult.urgencyCategory}
                       </span>
-                      <span
-                        className="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-white"
-                        style={{ color: "#5AA7A7" }}
-                      >
-                        ESI {triageResult.triageScore}
-                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <span
+                          className="text-[10px] font-bold px-2 py-0.5 rounded-full border"
+                          style={{
+                            backgroundColor: treatmentType === "ayurveda" ? "#ecfdf5" : "#f0fdf9",
+                            color: treatmentType === "ayurveda" ? "#047857" : "#0f766e",
+                            borderColor: treatmentType === "ayurveda" ? "#a7f3d0" : "#99f6e4",
+                          }}
+                        >
+                          {treatmentType === "ayurveda" ? "🌿 Ayurveda" : "💊 Allopathy"}
+                        </span>
+                        <span
+                          className="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-white"
+                          style={{ color: "#5AA7A7" }}
+                        >
+                          ESI {triageResult.triageScore}
+                        </span>
+                      </div>
                     </div>
                     <p className="text-xs text-slate-700 leading-relaxed mb-2">
                       {triageResult.clinicalSummary}
                     </p>
-                    <div className="text-[11px] text-slate-600 border-t pt-1.5 border-slate-200">
-                      <strong>Station:</strong> {triageResult.recommendedRoom}
+                    <div className="text-[11px] text-slate-600 border-t pt-2 border-slate-200 grid grid-cols-2 gap-2">
+                      <div>
+                        <strong>Department:</strong>{" "}
+                        {treatmentType === "ayurveda" ? "Ayurvedic Medicine & Panchakarma" : "Urgent Care & Walk-In"}
+                      </div>
+                      <div>
+                        <strong>Assigned Station:</strong> {triageResult.recommendedRoom}
+                      </div>
+                      <div className="col-span-2 text-slate-700">
+                        <strong>Assigned Physician:</strong>{" "}
+                        {treatmentType === "ayurveda"
+                          ? "Dr. Rajesh Sharma, BAMS, MD (Ayur)"
+                          : (triageResult.triageScore <= 2 ? "Dr. Sarah Jenkins, MD" : "Dr. Alisha Patel, DO")}
+                      </div>
                     </div>
                   </div>
 

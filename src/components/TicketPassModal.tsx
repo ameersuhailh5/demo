@@ -92,6 +92,19 @@ export const TicketPassModal: React.FC<TicketPassModalProps> = ({
               <span className="text-slate-500">MRN:</span>
               <span className="font-mono text-slate-800">{ticket.mrn}</span>
             </div>
+            <div className="flex justify-between items-center">
+              <span className="text-slate-500">Treatment:</span>
+              <span
+                className="font-bold px-2 py-0.5 rounded-full text-[11px] border"
+                style={{
+                  backgroundColor: ticket.treatmentType === "ayurveda" ? "#ecfdf5" : "#f0fdf9",
+                  color: ticket.treatmentType === "ayurveda" ? "#047857" : "#0f766e",
+                  borderColor: ticket.treatmentType === "ayurveda" ? "#a7f3d0" : "#99f6e4",
+                }}
+              >
+                {ticket.treatmentType === "ayurveda" ? "🌿 Ayurvedic Medicine" : "💊 Allopathic Medicine"}
+              </span>
+            </div>
             <div className="flex justify-between">
               <span className="text-slate-500">Provider:</span>
               <span className="font-medium text-slate-900">{ticket.doctorName}</span>

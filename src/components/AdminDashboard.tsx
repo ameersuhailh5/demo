@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Doctor, PatientRecord, QueueItem, Appointment } from "../types";
+import { Doctor, PatientRecord, QueueItem, Appointment, AuthUser } from "../types";
 import {
   ShieldCheck,
   Users,
@@ -14,6 +14,9 @@ import {
   Building2,
   PlusCircle,
   X,
+  Lock,
+  Leaf,
+  Pill,
 } from "lucide-react";
 import { playButtonTap, playSuccessChime } from "../utils/audio";
 
@@ -26,6 +29,8 @@ interface AdminDashboardProps {
   onUpdateDoctorAvailability: (doctorId: string, available: boolean) => void;
   onAddDoctor: (newDoctor: Doctor) => void;
   onInspectPatient: (patient: PatientRecord, queueItem?: QueueItem) => void;
+  authUser?: AuthUser | null;
+  onLockDashboard?: () => void;
 }
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({
@@ -37,6 +42,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onUpdateDoctorAvailability,
   onAddDoctor,
   onInspectPatient,
+  authUser,
+  onLockDashboard,
 }) => {
   const [activeTab, setActiveTab] = useState<"assignments" | "doctors" | "patients">("assignments");
   const [searchTerm, setSearchTerm] = useState("");
@@ -93,14 +100,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     if (!newDocName.trim()) return;
     playButtonTap();
 
+    const isAyur = newDocDept.toLowerCase().includes("ayur");
     const created: Doctor = {
       id: `doc-${Date.now()}`,
       name: newDocName.trim(),
-      title: "Attending Physician",
-      specialty: newDocSpecialty.trim() || "General Medicine",
+      title: isAyur ? "Ayurvedic Vaidya / Attending Physician" : "Attending Physician",
+      specialty: newDocSpecialty.trim() || (isAyur ? "Ayurvedic Medicine" : "General Medicine"),
       department: newDocDept,
-      room: newDocRoom.trim() || "Exam Room",
+      room: newDocRoom.trim() || (isAyur ? "Ayurveda Suite" : "Exam Room"),
       available: true,
+      treatmentType: isAyur ? "ayurveda" : "allopathy",
     };
 
     onAddDoctor(created);
@@ -132,12 +141,23 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowAddDocModal(true)}
-              className="text-slate-900 font-bold px-3.5 py-2 rounded-xl text-xs flex items-center gap-1.5 transition-all"
+              className="text-slate-900 font-bold px-3.5 py-2 rounded-xl text-xs flex items-center gap-1.5 transition-all cursor-pointer hover:opacity-95"
               style={{ backgroundColor: "#96D7C6" }}
             >
               <PlusCircle className="w-3.5 h-3.5" />
               <span>Add Doctor</span>
             </button>
+
+            {onLockDashboard && (
+              <button
+                onClick={onLockDashboard}
+                className="bg-slate-800 hover:bg-red-900/60 border border-slate-700 hover:border-red-600 text-slate-300 hover:text-white font-bold px-3 py-2 rounded-xl text-xs flex items-center gap-1.5 transition-all cursor-pointer"
+                title="Lock admin session and return to kiosk"
+              >
+                <Lock className="w-3.5 h-3.5 text-red-400" />
+                <span>Lock Session</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -150,10 +170,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </span>
           </div>
           <div>
-            <span className="text-slate-400 block text-[11px]">Queue Load</span>
-            <span className="text-lg font-bold" style={{ color: "#E2D36B" }}>
-              {queue.filter((q) => q.status === "waiting" || q.status === "called").length} Patients
-            </span>
+            <span className="text-slate-400 block text-[11px]">Care Modalities</span>
+            <div className="flex items-center gap-2 mt-0.5">
+              <span className="text-xs font-bold text-teal-300 inline-flex items-center gap-1">
+                <Pill className="w-3 h-3" />
+                {queue.filter((q) => q.treatmentType !== "ayurveda").length} Allop
+              </span>
+              <span className="text-slate-600">•</span>
+              <span className="text-xs font-bold text-emerald-300 inline-flex items-center gap-1">
+                <Leaf className="w-3 h-3" />
+                {queue.filter((q) => q.treatmentType === "ayurveda").length} Ayur
+              </span>
+            </div>
           </div>
           <div>
             <span className="text-slate-400 block text-[11px]">Total Patients in Care</span>
@@ -294,9 +322,26 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         <span className="font-bold text-slate-900 block">
                           {item.patientName}
                         </span>
-                        <span className="text-[10px] font-mono text-slate-500">
+                        <span className="text-[10px] font-mono text-slate-500 block">
                           {item.mrn}
                         </span>
+                        <div className="mt-1">
+                          <span
+                            className="text-[10px] font-bold px-2 py-0.5 rounded-full border inline-flex items-center gap-1"
+                            style={{
+                              backgroundColor: item.treatmentType === "ayurveda" ? "#ecfdf5" : "#f0fdf9",
+                              color: item.treatmentType === "ayurveda" ? "#047857" : "#0f766e",
+                              borderColor: item.treatmentType === "ayurveda" ? "#a7f3d0" : "#99f6e4",
+                            }}
+                          >
+                            {item.treatmentType === "ayurveda" ? (
+                              <Leaf className="w-2.5 h-2.5 text-emerald-600" />
+                            ) : (
+                              <Pill className="w-2.5 h-2.5 text-teal-600" />
+                            )}
+                            <span>{item.treatmentType === "ayurveda" ? "Ayurveda" : "Allopathy"}</span>
+                          </span>
+                        </div>
                       </td>
 
                       <td className="py-3 px-4 max-w-xs">
@@ -341,11 +386,32 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             style={{ borderColor: "#96D7C6" }}
                           >
                             <option value="" disabled>Select Doctor</option>
-                            {doctors.map((d) => (
-                              <option key={d.id} value={d.id}>
-                                {d.name} ({d.department})
-                              </option>
-                            ))}
+                            <optgroup label="🌿 Ayurvedic Medicine Physicians">
+                              {doctors
+                                .filter(
+                                  (d) =>
+                                    d.treatmentType === "ayurveda" ||
+                                    d.department.toLowerCase().includes("ayur")
+                                )
+                                .map((d) => (
+                                  <option key={d.id} value={d.id}>
+                                    {d.name} — {d.department} ({d.room})
+                                  </option>
+                                ))}
+                            </optgroup>
+                            <optgroup label="💊 Conventional Allopathic Physicians">
+                              {doctors
+                                .filter(
+                                  (d) =>
+                                    d.treatmentType !== "ayurveda" &&
+                                    !d.department.toLowerCase().includes("ayur")
+                                )
+                                .map((d) => (
+                                  <option key={d.id} value={d.id}>
+                                    {d.name} — {d.department} ({d.room})
+                                  </option>
+                                ))}
+                            </optgroup>
                           </select>
                           <span className="text-[10px] text-slate-400 block">
                             Assigned: {item.doctorName}
@@ -626,6 +692,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   <option value="Cardiology & Vascular">Cardiology & Vascular</option>
                   <option value="Pulmonology & Respiratory">Pulmonology & Respiratory</option>
                   <option value="Pediatrics">Pediatrics</option>
+                  <option value="Ayurvedic Medicine & Panchakarma">Ayurvedic Medicine & Panchakarma</option>
+                  <option value="Ayurvedic Holistic Care">Ayurvedic Holistic Care</option>
                 </select>
               </div>
 

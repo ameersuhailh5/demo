@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Doctor, PatientRecord, QueueItem } from "../types";
+import { Doctor, PatientRecord, QueueItem, AuthUser } from "../types";
 import {
   Stethoscope,
   Users,
@@ -15,6 +15,8 @@ import {
   Check,
   Send,
   UserCheck,
+  Lock,
+  Leaf,
 } from "lucide-react";
 import { playButtonTap, playSuccessChime, playClinicChime } from "../utils/audio";
 
@@ -26,6 +28,8 @@ interface DoctorPortalProps {
   onUpdateStatus: (queueId: string, status: QueueItem["status"]) => void;
   onOpenEHR: (patientMRN: string, queueItem?: QueueItem) => void;
   onSaveConsultationNotes: (queueId: string, notes: string) => void;
+  authUser?: AuthUser | null;
+  onLockPortal?: () => void;
 }
 
 export const DoctorPortal: React.FC<DoctorPortalProps> = ({
@@ -36,14 +40,19 @@ export const DoctorPortal: React.FC<DoctorPortalProps> = ({
   onUpdateStatus,
   onOpenEHR,
   onSaveConsultationNotes,
+  authUser,
+  onLockPortal,
 }) => {
-  // Current active doctor
-  const [selectedDoctorId, setSelectedDoctorId] = useState<string>(doctors[0]?.id || "doc-1");
+  // Current active doctor (default to authenticated doctor if present)
+  const [selectedDoctorId, setSelectedDoctorId] = useState<string>(
+    authUser?.doctorId || doctors[0]?.id || "doc-1"
+  );
   const currentDoctor = doctors.find((d) => d.id === selectedDoctorId) || doctors[0];
 
   // Active view: "my-patients" or "clinic-allocation" (which patient goes to which doctor)
   const [activeTab, setActiveTab] = useState<"my-patients" | "clinic-allocation">("my-patients");
   const [searchTerm, setSearchTerm] = useState("");
+  const [treatmentFilter, setTreatmentFilter] = useState<"all" | "allopathy" | "ayurveda">("all");
 
   // Notes drawer / modal state
   const [consultationQueueItem, setConsultationQueueItem] = useState<QueueItem | null>(null);
@@ -51,11 +60,20 @@ export const DoctorPortal: React.FC<DoctorPortalProps> = ({
 
   // Filter patients assigned to the currently selected doctor
   const myAssignedPatients = queue.filter(
-    (q) =>
-      (q.doctorId === currentDoctor.id || q.doctorName === currentDoctor.name) &&
-      (q.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (q) => {
+      const isAssigned = q.doctorId === currentDoctor.id || q.doctorName === currentDoctor.name;
+      const matchesSearch =
+        q.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         q.ticketNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        q.mrn.toLowerCase().includes(searchTerm.toLowerCase()))
+        q.mrn.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesTreatment =
+        treatmentFilter === "all"
+          ? true
+          : treatmentFilter === "ayurveda"
+          ? q.treatmentType === "ayurveda"
+          : q.treatmentType !== "ayurveda";
+      return isAssigned && matchesSearch && matchesTreatment;
+    }
   );
 
   const handleStartConsultation = (item: QueueItem) => {
@@ -120,7 +138,7 @@ export const DoctorPortal: React.FC<DoctorPortalProps> = ({
           {/* Doctor Switcher Dropdown */}
           <div className="flex items-center gap-2 bg-slate-800 p-2 rounded-xl border border-slate-700">
             <span className="text-xs text-slate-400 font-semibold pl-2">
-              Logged in Doctor:
+              Attending:
             </span>
             <select
               value={selectedDoctorId}
@@ -135,6 +153,17 @@ export const DoctorPortal: React.FC<DoctorPortalProps> = ({
                 </option>
               ))}
             </select>
+
+            {onLockPortal && (
+              <button
+                onClick={onLockPortal}
+                className="flex items-center gap-1 bg-red-950/70 hover:bg-red-900 border border-red-800 text-red-300 hover:text-white px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+                title="Lock doctor session and return to patient kiosk"
+              >
+                <Lock className="w-3.5 h-3.5 text-red-400" />
+                <span>Lock</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -167,12 +196,12 @@ export const DoctorPortal: React.FC<DoctorPortalProps> = ({
         </div>
       </div>
 
-      {/* Navigation Tabs */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-3">
-        <div className="flex items-center gap-2 text-xs font-bold">
+      {/* Navigation Tabs & Modality Filters */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-200 pb-3">
+        <div className="flex flex-wrap items-center gap-2 text-xs font-bold">
           <button
             onClick={() => setActiveTab("my-patients")}
-            className={`px-3.5 py-1.5 rounded-xl transition-colors flex items-center gap-1.5 ${
+            className={`px-3.5 py-1.5 rounded-xl transition-colors flex items-center gap-1.5 cursor-pointer ${
               activeTab === "my-patients"
                 ? "text-white shadow-xs"
                 : "bg-slate-100 text-slate-600 hover:text-slate-900"
@@ -187,7 +216,7 @@ export const DoctorPortal: React.FC<DoctorPortalProps> = ({
 
           <button
             onClick={() => setActiveTab("clinic-allocation")}
-            className={`px-3.5 py-1.5 rounded-xl transition-colors flex items-center gap-1.5 ${
+            className={`px-3.5 py-1.5 rounded-xl transition-colors flex items-center gap-1.5 cursor-pointer ${
               activeTab === "clinic-allocation"
                 ? "text-white shadow-xs"
                 : "bg-slate-100 text-slate-600 hover:text-slate-900"
@@ -201,16 +230,53 @@ export const DoctorPortal: React.FC<DoctorPortalProps> = ({
           </button>
         </div>
 
-        {/* Search */}
-        <div className="relative w-full sm:w-64">
-          <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search patient or ticket..."
-            className="w-full bg-white border border-slate-300 rounded-xl pl-8 pr-3 py-1.5 text-xs focus:outline-none"
-          />
+        {/* Modality Filter Pills & Search */}
+        <div className="flex items-center gap-2">
+          <div className="flex items-center bg-slate-100 p-0.5 rounded-xl text-[11px] font-semibold">
+            <button
+              onClick={() => setTreatmentFilter("all")}
+              className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+                treatmentFilter === "all"
+                  ? "bg-white text-slate-900 shadow-xs font-bold"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              All
+            </button>
+            <button
+              onClick={() => setTreatmentFilter("allopathy")}
+              className={`px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 cursor-pointer ${
+                treatmentFilter === "allopathy"
+                  ? "bg-white text-teal-800 shadow-xs font-bold"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              <Pill className="w-3 h-3 text-teal-600" />
+              <span>Allopathy</span>
+            </button>
+            <button
+              onClick={() => setTreatmentFilter("ayurveda")}
+              className={`px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 cursor-pointer ${
+                treatmentFilter === "ayurveda"
+                  ? "bg-white text-emerald-800 shadow-xs font-bold"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              <Leaf className="w-3 h-3 text-emerald-600" />
+              <span>Ayurveda</span>
+            </button>
+          </div>
+
+          <div className="relative w-full sm:w-56">
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search patient..."
+              className="w-full bg-white border border-slate-300 rounded-xl pl-8 pr-3 py-1 text-xs focus:outline-none"
+            />
+          </div>
         </div>
       </div>
 
@@ -272,9 +338,26 @@ export const DoctorPortal: React.FC<DoctorPortalProps> = ({
                         <h3 className="font-bold text-slate-900 text-base mt-0.5">
                           {item.patientName}
                         </h3>
-                        <span className="text-xs text-slate-500 font-mono">
-                          {item.mrn} • {pat.dob} ({pat.gender})
-                        </span>
+                        <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
+                          <span
+                            className="text-[10px] font-bold px-2 py-0.5 rounded-full border inline-flex items-center gap-1"
+                            style={{
+                              backgroundColor: item.treatmentType === "ayurveda" ? "#ecfdf5" : "#f0fdf9",
+                              color: item.treatmentType === "ayurveda" ? "#047857" : "#0f766e",
+                              borderColor: item.treatmentType === "ayurveda" ? "#a7f3d0" : "#99f6e4",
+                            }}
+                          >
+                            {item.treatmentType === "ayurveda" ? (
+                              <Leaf className="w-3 h-3 text-emerald-600" />
+                            ) : (
+                              <Pill className="w-3 h-3 text-teal-600" />
+                            )}
+                            <span>{item.treatmentType === "ayurveda" ? "Ayurveda" : "Allopathy"}</span>
+                          </span>
+                          <span className="text-xs text-slate-500 font-mono">
+                            {item.mrn} • {pat.dob} ({pat.gender})
+                          </span>
+                        </div>
                       </div>
 
                       {/* ESI Triage Pill */}
@@ -533,8 +616,19 @@ export const DoctorPortal: React.FC<DoctorPortalProps> = ({
                             </div>
 
                             <div className="flex items-center justify-between text-[11px] text-slate-500">
-                              <span>ESI {patItem.esiScore}</span>
-                              <span className="truncate max-w-[140px]">
+                              <span className="inline-flex items-center gap-1">
+                                {patItem.treatmentType === "ayurveda" ? (
+                                  <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200 inline-flex items-center gap-0.5">
+                                    <Leaf className="w-2.5 h-2.5" /> Ayur
+                                  </span>
+                                ) : (
+                                  <span className="text-[10px] font-bold text-teal-700 bg-teal-50 px-1.5 py-0.2 rounded border border-teal-200 inline-flex items-center gap-0.5">
+                                    <Pill className="w-2.5 h-2.5" /> Allop
+                                  </span>
+                                )}
+                                <span>ESI {patItem.esiScore}</span>
+                              </span>
+                              <span className="truncate max-w-[130px]">
                                 {patItem.chiefComplaint}
                               </span>
                             </div>
@@ -569,6 +663,39 @@ export const DoctorPortal: React.FC<DoctorPortalProps> = ({
             </div>
 
             <div className="p-5 space-y-3.5 text-xs">
+              {consultationQueueItem.treatmentType === "ayurveda" && (
+                <div className="bg-emerald-50/80 border border-emerald-200 rounded-xl p-3 text-emerald-900 space-y-1.5">
+                  <div className="flex items-center gap-1.5 font-bold text-xs text-emerald-800">
+                    <Leaf className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Ayurvedic Clinical Protocol Active</span>
+                  </div>
+                  <p className="text-[11px] text-emerald-700">
+                    Quick Clinical Presets for Ayurvedic Consultation:
+                  </p>
+                  <div className="flex flex-wrap gap-1.5 pt-0.5">
+                    {[
+                      "Nadi Pariksha: Vata-Pitta Imbalance",
+                      "Advised Triphala Churna & Ashwagandha",
+                      "Prescribed Shirodhara (7 Days)",
+                      "Digestive Agni restoration diet plan",
+                    ].map((preset) => (
+                      <button
+                        key={preset}
+                        type="button"
+                        onClick={() =>
+                          setClinicalNotesInput(
+                            (prev) => (prev ? `${prev}\n• ${preset}` : `• ${preset}`)
+                          )
+                        }
+                        className="text-[10px] bg-white text-emerald-800 border border-emerald-300 hover:bg-emerald-100/50 px-2 py-1 rounded-lg font-medium transition-colors cursor-pointer"
+                      >
+                        + {preset}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div>
                 <label className="block text-slate-700 font-bold mb-1">
                   Physician Diagnosis & Clinical Notes:

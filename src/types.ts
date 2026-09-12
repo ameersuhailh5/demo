@@ -4,6 +4,8 @@ export type Language = "en" | "es" | "zh";
 
 export type UrgencyLevel = "routine" | "moderate" | "urgent" | "emergent" | "critical";
 
+export type TreatmentType = "allopathy" | "ayurveda" | "integrative";
+
 export interface Doctor {
   id: string;
   name: string;
@@ -15,6 +17,8 @@ export interface Doctor {
   phone?: string;
   email?: string;
   activePatientCount?: number;
+  treatmentType?: TreatmentType;
+  treatmentModalityTitle?: string;
 }
 
 export interface PatientRecord {
@@ -27,6 +31,7 @@ export interface PatientRecord {
   phone: string;
   email: string;
   address: string;
+  preferredTreatment?: TreatmentType;
   emergencyContact: {
     name: string;
     relationship: string;
@@ -46,6 +51,7 @@ export interface PatientRecord {
     chronicConditions: string[];
     bloodType: string;
     vaccinations: Array<{ name: string; date: string }>;
+    ayurvedicConstitution?: string; // Vata, Pitta, Kapha
   };
 }
 
@@ -69,6 +75,7 @@ export interface Appointment {
   copayPaid: boolean;
   ticketNumber?: string;
   checkInTime?: string;
+  treatmentType?: TreatmentType;
 }
 
 export interface TriageEvaluation {
@@ -79,6 +86,8 @@ export interface TriageEvaluation {
   clinicalSummary: string;
   suggestedNursingNotes: string;
   source?: string;
+  treatmentType?: TreatmentType;
+  ayurvedicNotes?: string;
 }
 
 export interface QueueItem {
@@ -108,6 +117,7 @@ export interface QueueItem {
   clinicalNotes?: string;
   prescriptionsGiven?: string[];
   assignedBy?: "system" | "admin" | "kiosk";
+  treatmentType?: TreatmentType;
 }
 
 export interface AuditLogEntry {
@@ -118,4 +128,17 @@ export interface AuditLogEntry {
   patientMRN: string;
   details: string;
   securityHash: string;
+}
+
+export type StaffRole = "admin" | "doctor";
+
+export interface AuthUser {
+  id: string;
+  username: string;
+  name: string;
+  role: StaffRole;
+  token: string;
+  doctorId?: string;
+  department?: string;
+  title?: string;
 }

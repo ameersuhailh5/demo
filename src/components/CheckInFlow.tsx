@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Appointment, PatientRecord, QueueItem, Language } from "../types";
+import { Appointment, PatientRecord, QueueItem, Language, TreatmentType } from "../types";
 import {
   Search,
   QrCode,
@@ -12,6 +12,9 @@ import {
   Camera,
   ShieldCheck,
   Building2,
+  Leaf,
+  Pill,
+  Sparkles,
 } from "lucide-react";
 import { playSuccessChime, playButtonTap } from "../utils/audio";
 
@@ -42,6 +45,7 @@ export const CheckInFlow: React.FC<CheckInFlowProps> = ({
     null
   );
   const [matchedPatient, setMatchedPatient] = useState<PatientRecord | null>(null);
+  const [selectedTreatment, setSelectedTreatment] = useState<TreatmentType>("allopathy");
   const [hasNewSymptoms, setHasNewSymptoms] = useState<boolean | null>(false);
   const [copayMethod, setCopayMethod] = useState<"card" | "apple_pay" | "bill_later">(
     "card"
@@ -73,6 +77,7 @@ export const CheckInFlow: React.FC<CheckInFlowProps> = ({
 
     if (apt) {
       setMatchedAppointment(apt);
+      setSelectedTreatment(apt.treatmentType || "allopathy");
       const pat = patients.find((p) => p.id === apt?.patientId);
       setMatchedPatient(pat || null);
     } else {
@@ -90,6 +95,7 @@ export const CheckInFlow: React.FC<CheckInFlowProps> = ({
       const apt = appointments.find((a) => a.confirmationCode === "MK-101");
       if (apt) {
         setMatchedAppointment(apt);
+        setSelectedTreatment(apt.treatmentType || "allopathy");
         const pat = patients.find((p) => p.id === apt?.patientId);
         setMatchedPatient(pat || null);
         playSuccessChime();
@@ -109,11 +115,27 @@ export const CheckInFlow: React.FC<CheckInFlowProps> = ({
 
       const ticketNum =
         matchedAppointment.ticketNumber ||
-        `A-${Math.floor(100 + Math.random() * 899)}`;
+        (selectedTreatment === "ayurveda"
+          ? `AY-${Math.floor(100 + Math.random() * 899)}`
+          : `A-${Math.floor(100 + Math.random() * 899)}`);
+
       const nowTime = new Date().toLocaleTimeString([], {
         hour: "2-digit",
         minute: "2-digit",
       });
+
+      const isAyur = selectedTreatment === "ayurveda";
+      const docName = isAyur
+        ? (matchedAppointment.treatmentType === "ayurveda" ? matchedAppointment.doctorName : "Dr. Rajesh Sharma, BAMS, MD (Ayur)")
+        : (matchedAppointment.treatmentType === "ayurveda" ? "Dr. Sarah Jenkins, MD" : matchedAppointment.doctorName);
+
+      const deptName = isAyur
+        ? "Ayurvedic Medicine & Panchakarma"
+        : (matchedAppointment.treatmentType === "ayurveda" ? "General Internal Medicine" : matchedAppointment.department);
+
+      const roomName = isAyur
+        ? (matchedAppointment.treatmentType === "ayurveda" ? matchedAppointment.room : "Ayurveda Suite 1A")
+        : (matchedAppointment.treatmentType === "ayurveda" ? "Exam Room 3" : matchedAppointment.room);
 
       const queueItem: QueueItem = {
         id: `q-${Date.now()}`,
@@ -123,9 +145,9 @@ export const CheckInFlow: React.FC<CheckInFlowProps> = ({
         mrn: matchedPatient?.mrn || `MRN-${Math.floor(10000 + Math.random() * 90000)}`,
         checkInTime: nowTime,
         appointmentTime: matchedAppointment.time,
-        doctorName: matchedAppointment.doctorName,
-        department: matchedAppointment.department,
-        assignedRoom: matchedAppointment.room,
+        doctorName: docName,
+        department: deptName,
+        assignedRoom: roomName,
         status: "waiting",
         type: "scheduled",
         urgency: "routine",
@@ -135,6 +157,7 @@ export const CheckInFlow: React.FC<CheckInFlowProps> = ({
         insuranceVerified: true,
         signatureCompleted: true,
         estimatedWaitMinutes: 8,
+        treatmentType: selectedTreatment,
       };
 
       onCheckInComplete(queueItem);
@@ -390,7 +413,9 @@ export const CheckInFlow: React.FC<CheckInFlowProps> = ({
               <div>
                 <span className="text-slate-500 block">Doctor</span>
                 <span className="font-bold text-slate-900">
-                  {matchedAppointment.doctorName}
+                  {selectedTreatment === "ayurveda"
+                    ? (matchedAppointment.treatmentType === "ayurveda" ? matchedAppointment.doctorName : "Dr. Rajesh Sharma, BAMS, MD (Ayur)")
+                    : (matchedAppointment.treatmentType === "ayurveda" ? "Dr. Sarah Jenkins, MD" : matchedAppointment.doctorName)}
                 </span>
               </div>
             </div>
@@ -400,7 +425,9 @@ export const CheckInFlow: React.FC<CheckInFlowProps> = ({
               <div>
                 <span className="text-slate-500 block">Location</span>
                 <span className="font-bold text-slate-900">
-                  {matchedAppointment.department} — {matchedAppointment.room}
+                  {selectedTreatment === "ayurveda"
+                    ? "Ayurvedic Medicine — Ayurveda Suite 1A"
+                    : `${matchedAppointment.department} — ${matchedAppointment.room}`}
                 </span>
               </div>
             </div>
@@ -414,6 +441,77 @@ export const CheckInFlow: React.FC<CheckInFlowProps> = ({
                 </span>
               </div>
             </div>
+          </div>
+
+          {/* Treatment Modality Selection */}
+          <div className="border border-slate-200 p-3.5 rounded-xl bg-white space-y-2">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-bold text-slate-800">
+                Care Modality / Treatment Type
+              </h3>
+              <span className="text-[10px] font-semibold text-slate-500">
+                Patient Preference
+              </span>
+            </div>
+            <p className="text-xs text-slate-500">
+              Select or confirm your preferred medical treatment system for today&apos;s visit:
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                id="btn-checkin-allopathy"
+                onClick={() => {
+                  playButtonTap();
+                  setSelectedTreatment("allopathy");
+                }}
+                className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                  selectedTreatment === "allopathy"
+                    ? "border-teal-600 bg-teal-50/70 text-slate-900 font-semibold"
+                    : "border-slate-200 bg-slate-50/50 text-slate-600 hover:bg-slate-50"
+                }`}
+              >
+                <div className="flex items-center gap-1.5 mb-1">
+                  <Pill className="w-3.5 h-3.5" style={{ color: "#5AA7A7" }} />
+                  <span className="text-xs font-bold">Allopathy</span>
+                  {selectedTreatment === "allopathy" && (
+                    <CheckCircle2 className="w-3 h-3 ml-auto text-teal-600" />
+                  )}
+                </div>
+                <span className="text-[10px] text-slate-500 block leading-tight">
+                  Conventional clinical care & pharmaceuticals
+                </span>
+              </button>
+
+              <button
+                type="button"
+                id="btn-checkin-ayurveda"
+                onClick={() => {
+                  playButtonTap();
+                  setSelectedTreatment("ayurveda");
+                }}
+                className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                  selectedTreatment === "ayurveda"
+                    ? "border-emerald-600 bg-emerald-50/70 text-slate-900 font-semibold"
+                    : "border-slate-200 bg-slate-50/50 text-slate-600 hover:bg-slate-50"
+                }`}
+              >
+                <div className="flex items-center gap-1.5 mb-1">
+                  <Leaf className="w-3.5 h-3.5 text-emerald-600" />
+                  <span className="text-xs font-bold">Ayurveda</span>
+                  {selectedTreatment === "ayurveda" && (
+                    <CheckCircle2 className="w-3 h-3 ml-auto text-emerald-600" />
+                  )}
+                </div>
+                <span className="text-[10px] text-slate-500 block leading-tight">
+                  Holistic Dosha assessment, herbs & dietetics
+                </span>
+              </button>
+            </div>
+            {selectedTreatment === "ayurveda" && (
+              <div className="text-[11px] text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg p-2">
+                🌿 Routing to Ayurvedic Medicine: consultation with <strong>Dr. Rajesh Sharma, BAMS, MD (Ayur)</strong> in Ayurveda Suite 1A.
+              </div>
+            )}
           </div>
 
           {/* Health Screen */}

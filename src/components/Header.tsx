@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { AppMode, Language } from "../types";
+import { AppMode, Language, AuthUser, StaffRole } from "../types";
 import {
   Activity,
   Tv,
@@ -12,6 +12,10 @@ import {
   AlertTriangle,
   HeartPulse,
   Terminal,
+  Lock,
+  Unlock,
+  LogOut,
+  ShieldCheck,
 } from "lucide-react";
 
 interface HeaderProps {
@@ -24,6 +28,8 @@ interface HeaderProps {
   soundEnabled: boolean;
   onToggleSound: () => void;
   activeWaitingCount: number;
+  authUser?: AuthUser | null;
+  onSignOut?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -36,6 +42,8 @@ export const Header: React.FC<HeaderProps> = ({
   soundEnabled,
   onToggleSound,
   activeWaitingCount,
+  authUser,
+  onSignOut,
 }) => {
   const [currentTime, setCurrentTime] = useState("");
 
@@ -164,7 +172,7 @@ export const Header: React.FC<HeaderProps> = ({
                 </span>
               </div>
               <p className="text-xs text-slate-500">
-                Clinic Patient Registration & Automated Check-In
+                Clinic Patient Intake & Registration
               </p>
             </div>
           </div>
@@ -190,7 +198,7 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               id="tab-doctor-mode"
               onClick={() => onSelectMode("doctor")}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
+              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg transition-all ${
                 currentMode === "doctor"
                   ? "bg-white shadow-xs font-bold"
                   : "text-slate-600 hover:text-slate-900"
@@ -201,12 +209,17 @@ export const Header: React.FC<HeaderProps> = ({
             >
               <Stethoscope className="w-3.5 h-3.5" style={{ color: "#5AA7A7" }} />
               <span>Doctor Portal</span>
+              {authUser?.role === "doctor" ? (
+                <Unlock className="w-3 h-3 text-emerald-500 ml-0.5" />
+              ) : (
+                <Lock className="w-3 h-3 text-slate-400 ml-0.5" />
+              )}
             </button>
 
             <button
               id="tab-admin-mode"
               onClick={() => onSelectMode("admin")}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
+              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg transition-all ${
                 currentMode === "admin"
                   ? "bg-white shadow-xs font-bold"
                   : "text-slate-600 hover:text-slate-900"
@@ -215,8 +228,13 @@ export const Header: React.FC<HeaderProps> = ({
                 color: currentMode === "admin" ? "#6C8CBF" : undefined,
               }}
             >
-              <Users className="w-3.5 h-3.5" style={{ color: "#6C8CBF" }} />
+              <ShieldCheck className="w-3.5 h-3.5" style={{ color: "#6C8CBF" }} />
               <span>Admin</span>
+              {authUser?.role === "admin" ? (
+                <Unlock className="w-3 h-3 text-emerald-500 ml-0.5" />
+              ) : (
+                <Lock className="w-3 h-3 text-slate-400 ml-0.5" />
+              )}
               {activeWaitingCount > 0 && (
                 <span
                   className="ml-0.5 text-slate-900 text-[10px] font-bold px-1.5 py-0.2 rounded-full"
@@ -259,6 +277,41 @@ export const Header: React.FC<HeaderProps> = ({
               <span>EHR</span>
             </button>
           </nav>
+
+          {/* Active Authenticated Staff User Pill & Lock/Sign Out Button */}
+          {authUser && (
+            <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1 rounded-xl text-xs">
+              <div className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span className="text-slate-500 text-[11px]">Logged in:</span>
+                <span className="font-bold text-slate-800 text-[11px] truncate max-w-[140px]">
+                  {authUser.name}
+                </span>
+                <span
+                  className="text-[10px] font-mono px-1.5 py-0.2 rounded-md font-bold uppercase"
+                  style={{
+                    backgroundColor:
+                      authUser.role === "admin"
+                        ? "rgba(108, 140, 191, 0.15)"
+                        : "rgba(90, 167, 167, 0.15)",
+                    color: authUser.role === "admin" ? "#6C8CBF" : "#5AA7A7",
+                  }}
+                >
+                  {authUser.role}
+                </span>
+              </div>
+
+              <button
+                id="btn-staff-sign-out"
+                onClick={onSignOut}
+                className="flex items-center gap-1 text-[11px] text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 px-2 py-0.5 rounded-lg font-semibold transition-colors ml-1 border border-red-200"
+                title="Lock Session & Sign Out (Returns to Kiosk)"
+              >
+                <Lock className="w-3 h-3" />
+                <span>Lock / Sign Out</span>
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </header>

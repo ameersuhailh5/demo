@@ -7,6 +7,8 @@ import {
   QueueItem,
   AuditLogEntry,
   Doctor,
+  AuthUser,
+  StaffRole,
 } from "./types";
 import {
   INITIAL_PATIENTS,
@@ -17,7 +19,6 @@ import {
 } from "./data/mockData";
 import { Header } from "./components/Header";
 import { KioskHome } from "./components/KioskHome";
-import { CheckInFlow } from "./components/CheckInFlow";
 import { WalkInRegistration } from "./components/WalkInRegistration";
 import { DoctorPortal } from "./components/DoctorPortal";
 import { AdminDashboard } from "./components/AdminDashboard";
@@ -26,15 +27,27 @@ import { EHRVaultModal } from "./components/EHRVaultModal";
 import { EHRGatewayView } from "./components/EHRGatewayView";
 import { TicketPassModal } from "./components/TicketPassModal";
 import { UpdateRecordsModal } from "./components/UpdateRecordsModal";
+import { StaffAuthModal } from "./components/StaffAuthModal";
 import { playClinicChime, playSuccessChime } from "./utils/audio";
+import { Lock, ShieldAlert } from "lucide-react";
 
 export default function App() {
   // Navigation Mode: kiosk | doctor | admin | tv-display | ehr-vault
   const [currentMode, setCurrentMode] = useState<AppMode>("kiosk");
   const [kioskSubView, setKioskSubView] = useState<
-    "home" | "checkin" | "walkin" | "queue-check"
+    "home" | "walkin" | "queue-check"
   >("home");
-  const [presetCheckInCode, setPresetCheckInCode] = useState<string>("");
+
+  // Staff Authentication State
+  const [authUser, setAuthUser] = useState<AuthUser | null>(null);
+  const [authModal, setAuthModal] = useState<{
+    isOpen: boolean;
+    requiredRole: StaffRole;
+    targetMode?: AppMode;
+  }>({
+    isOpen: false,
+    requiredRole: "doctor",
+  });
 
   // Accessibility & Preferences
   const [language, setLanguage] = useState<Language>("en");
@@ -83,6 +96,70 @@ export default function App() {
       })
       .catch(() => {});
   }, []);
+
+  // Mode Selection with Password & Role Protection Gate
+  const handleSelectMode = (mode: AppMode) => {
+    if (mode === "doctor") {
+      if (authUser && authUser.role === "doctor") {
+        setCurrentMode("doctor");
+      } else {
+        setAuthModal({
+          isOpen: true,
+          requiredRole: "doctor",
+          targetMode: "doctor",
+        });
+      }
+      return;
+    }
+
+    if (mode === "admin") {
+      if (authUser && authUser.role === "admin") {
+        setCurrentMode("admin");
+      } else {
+        setAuthModal({
+          isOpen: true,
+          requiredRole: "admin",
+          targetMode: "admin",
+        });
+      }
+      return;
+    }
+
+    if (mode === "kiosk") {
+      setKioskSubView("home");
+    }
+    setCurrentMode(mode);
+  };
+
+  // Staff Login Success Handler
+  const handleAuthSuccess = (user: AuthUser) => {
+    setAuthUser(user);
+    const destination = authModal.targetMode || user.role;
+    setCurrentMode(destination);
+    setAuthModal({ isOpen: false, requiredRole: user.role });
+
+    logAuditEvent(
+      "STAFF_LOGIN_SUCCESS",
+      "SYSTEM",
+      `${user.name} authenticated into ${user.role.toUpperCase()} panel.`,
+      user.role === "admin" ? "admin" : "attending_md"
+    );
+  };
+
+  // Staff Sign Out / Lock Session Handler
+  const handleSignOut = () => {
+    if (authUser) {
+      logAuditEvent(
+        "STAFF_LOCK_SESSION",
+        "SYSTEM",
+        `${authUser.name} locked panel session. Patient access locked.`,
+        authUser.role === "admin" ? "admin" : "attending_md"
+      );
+    }
+    setAuthUser(null);
+    setCurrentMode("kiosk");
+    setKioskSubView("home");
+  };
 
   // Log an immutable audit entry
   const logAuditEvent = (
@@ -362,10 +439,7 @@ export default function App() {
       {/* Top Clinic Header with Mode Switcher & Accessibility */}
       <Header
         currentMode={currentMode}
-        onSelectMode={(mode) => {
-          setCurrentMode(mode);
-          if (mode === "kiosk") setKioskSubView("home");
-        }}
+        onSelectMode={handleSelectMode}
         language={language}
         onSelectLanguage={setLanguage}
         fontSizeLarge={fontSizeLarge}
@@ -373,6 +447,8 @@ export default function App() {
         soundEnabled={soundEnabled}
         onToggleSound={() => setSoundEnabled((prev) => !prev)}
         activeWaitingCount={activeWaitingCount}
+        authUser={authUser}
+        onSignOut={handleSignOut}
       />
 
       {/* Main Viewport Container */}
@@ -383,29 +459,11 @@ export default function App() {
             {kioskSubView === "home" && (
               <KioskHome
                 language={language}
-                onStartCheckIn={(presetCode) => {
-                  setPresetCheckInCode(presetCode || "");
-                  setKioskSubView("checkin");
-                }}
                 onStartWalkIn={() => setKioskSubView("walkin")}
                 onViewQueue={() => setCurrentMode("tv-display")}
                 onUpdateRecords={() => setShowUpdateRecordsModal(true)}
                 waitingCount={activeWaitingCount}
                 averageWaitMinutes={averageWaitMinutes}
-              />
-            )}
-
-            {kioskSubView === "checkin" && (
-              <CheckInFlow
-                appointments={appointments}
-                patients={patients}
-                initialCode={presetCheckInCode}
-                onCheckInComplete={handleCheckInComplete}
-                onCancel={() => {
-                  setPresetCheckInCode("");
-                  setKioskSubView("home");
-                }}
-                language={language}
               />
             )}
 
@@ -419,33 +477,139 @@ export default function App() {
           </div>
         )}
 
-        {/* ROLE 2: DOCTOR WORKSTATION & ALLOCATION PORTAL */}
+        {/* ROLE 2: DOCTOR WORKSTATION & ALLOCATION PORTAL (PASSWORD PROTECTED) */}
         {currentMode === "doctor" && (
-          <DoctorPortal
-            doctors={doctors}
-            patients={patients}
-            queue={queue}
-            onCallPatient={handleCallPatient}
-            onUpdateStatus={handleUpdateQueueStatus}
-            onOpenEHR={handleOpenEHR}
-            onSaveConsultationNotes={handleSaveConsultationNotes}
-          />
+          authUser?.role === "doctor" ? (
+            <DoctorPortal
+              doctors={doctors}
+              patients={patients}
+              queue={queue}
+              onCallPatient={handleCallPatient}
+              onUpdateStatus={handleUpdateQueueStatus}
+              onOpenEHR={handleOpenEHR}
+              onSaveConsultationNotes={handleSaveConsultationNotes}
+              authUser={authUser}
+              onLockPortal={handleSignOut}
+            />
+          ) : (
+            <div className="max-w-md mx-auto my-14 p-8 bg-white rounded-2xl border border-slate-200 shadow-xl text-center space-y-4">
+              <div
+                className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto border"
+                style={{
+                  backgroundColor: "rgba(90, 167, 167, 0.1)",
+                  borderColor: "#5AA7A7",
+                  color: "#5AA7A7",
+                }}
+              >
+                <Lock className="w-7 h-7" />
+              </div>
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  Access Restricted
+                </span>
+                <h2 className="text-xl font-black text-slate-900 mt-0.5">
+                  Doctor Portal Locked
+                </h2>
+                <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                  Physician credentials required to view clinical data and patient triage records.
+                </p>
+              </div>
+
+              <div className="pt-2 space-y-2">
+                <button
+                  onClick={() =>
+                    setAuthModal({
+                      isOpen: true,
+                      requiredRole: "doctor",
+                      targetMode: "doctor",
+                    })
+                  }
+                  className="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-white shadow-xs transition-opacity hover:opacity-95 cursor-pointer"
+                  style={{ backgroundColor: "#5AA7A7" }}
+                >
+                  Doctor Login (doc123)
+                </button>
+                <button
+                  onClick={() => {
+                    setCurrentMode("kiosk");
+                    setKioskSubView("home");
+                  }}
+                  className="w-full py-2 px-3 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors"
+                >
+                  Return to Patient Kiosk
+                </button>
+              </div>
+            </div>
+          )
         )}
 
-        {/* ROLE 3: CLINIC ADMIN DISPATCH & ASSIGNMENT MANAGEMENT */}
+        {/* ROLE 3: CLINIC ADMIN DISPATCH & ASSIGNMENT MANAGEMENT (PASSWORD PROTECTED) */}
         {currentMode === "admin" && (
-          <AdminDashboard
-            doctors={doctors}
-            patients={patients}
-            queue={queue}
-            appointments={appointments}
-            onAssignDoctor={handleAssignDoctor}
-            onUpdateDoctorAvailability={handleUpdateDoctorAvailability}
-            onAddDoctor={handleAddDoctor}
-            onInspectPatient={(pat, item) =>
-              setActiveEHRModal({ patient: pat, queueItem: item })
-            }
-          />
+          authUser?.role === "admin" ? (
+            <AdminDashboard
+              doctors={doctors}
+              patients={patients}
+              queue={queue}
+              appointments={appointments}
+              onAssignDoctor={handleAssignDoctor}
+              onUpdateDoctorAvailability={handleUpdateDoctorAvailability}
+              onAddDoctor={handleAddDoctor}
+              onInspectPatient={(pat, item) =>
+                setActiveEHRModal({ patient: pat, queueItem: item })
+              }
+              authUser={authUser}
+              onLockDashboard={handleSignOut}
+            />
+          ) : (
+            <div className="max-w-md mx-auto my-14 p-8 bg-white rounded-2xl border border-slate-200 shadow-xl text-center space-y-4">
+              <div
+                className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto border"
+                style={{
+                  backgroundColor: "rgba(108, 140, 191, 0.1)",
+                  borderColor: "#6C8CBF",
+                  color: "#6C8CBF",
+                }}
+              >
+                <Lock className="w-7 h-7" />
+              </div>
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  Access Restricted
+                </span>
+                <h2 className="text-xl font-black text-slate-900 mt-0.5">
+                  Admin Dashboard Locked
+                </h2>
+                <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                  Administrator password required to manage doctor allocations and patient master files.
+                </p>
+              </div>
+
+              <div className="pt-2 space-y-2">
+                <button
+                  onClick={() =>
+                    setAuthModal({
+                      isOpen: true,
+                      requiredRole: "admin",
+                      targetMode: "admin",
+                    })
+                  }
+                  className="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-white shadow-xs transition-opacity hover:opacity-95 cursor-pointer"
+                  style={{ backgroundColor: "#6C8CBF" }}
+                >
+                  Admin Login (admin123)
+                </button>
+                <button
+                  onClick={() => {
+                    setCurrentMode("kiosk");
+                    setKioskSubView("home");
+                  }}
+                  className="w-full py-2 px-3 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors"
+                >
+                  Return to Patient Kiosk
+                </button>
+              </div>
+            </div>
+          )
         )}
 
         {/* ROLE 4: LOBBY TV CALLING DISPLAY */}
@@ -470,6 +634,15 @@ export default function App() {
           />
         )}
       </main>
+
+      {/* Staff Role Authentication Modal (Password & PIN Gate) */}
+      <StaffAuthModal
+        isOpen={authModal.isOpen}
+        requiredRole={authModal.requiredRole}
+        doctors={doctors}
+        onClose={() => setAuthModal({ isOpen: false, requiredRole: "doctor" })}
+        onSuccess={handleAuthSuccess}
+      />
 
       {/* Ticket Pass Modal (When check-in or walk-in completes) */}
       {activeTicketModal && (

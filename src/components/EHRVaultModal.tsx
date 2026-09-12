@@ -11,6 +11,7 @@ import {
   Lock,
   Download,
   Sparkles,
+  Leaf,
 } from "lucide-react";
 
 interface EHRVaultModalProps {
@@ -204,7 +205,7 @@ export const EHRVaultModal: React.FC<EHRVaultModalProps> = ({
               )}
 
               {/* Patient Core Info */}
-              <div className="grid grid-cols-2 gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
                 <div>
                   <span className="text-slate-400 block text-[10px]">DOB / Age</span>
                   <span className="font-semibold text-slate-900">
@@ -216,15 +217,46 @@ export const EHRVaultModal: React.FC<EHRVaultModalProps> = ({
                   <span className="font-semibold text-slate-900">{patient.phone}</span>
                 </div>
                 <div>
+                  <span className="text-slate-400 block text-[10px]">Treatment System</span>
+                  <span
+                    className="font-bold text-[11px] px-2 py-0.5 rounded-md border inline-flex items-center gap-1 mt-0.5"
+                    style={{
+                      backgroundColor:
+                        (queueItem?.treatmentType || patient.treatmentType) === "ayurveda"
+                          ? "#ecfdf5"
+                          : "#f0fdf9",
+                      color:
+                        (queueItem?.treatmentType || patient.treatmentType) === "ayurveda"
+                          ? "#047857"
+                          : "#0f766e",
+                      borderColor:
+                        (queueItem?.treatmentType || patient.treatmentType) === "ayurveda"
+                          ? "#a7f3d0"
+                          : "#99f6e4",
+                    }}
+                  >
+                    {(queueItem?.treatmentType || patient.treatmentType) === "ayurveda" ? (
+                      <Leaf className="w-3 h-3 text-emerald-600" />
+                    ) : (
+                      <Pill className="w-3 h-3 text-teal-600" />
+                    )}
+                    <span>
+                      {(queueItem?.treatmentType || patient.treatmentType) === "ayurveda"
+                        ? "Ayurvedic Medicine"
+                        : "Allopathy"}
+                    </span>
+                  </span>
+                </div>
+                <div>
                   <span className="text-slate-400 block text-[10px]">Emergency</span>
                   <span className="font-semibold text-slate-900">
                     {patient.emergencyContact.name} ({patient.emergencyContact.phone})
                   </span>
                 </div>
-                <div>
+                <div className="sm:col-span-2">
                   <span className="text-slate-400 block text-[10px]">Insurance</span>
                   <span className="font-semibold text-slate-900">
-                    {patient.insurance.provider}
+                    {patient.insurance.provider} ({patient.insurance.policyNumber})
                   </span>
                 </div>
               </div>
