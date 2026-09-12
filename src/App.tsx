@@ -30,6 +30,7 @@ import { UpdateRecordsModal } from "./components/UpdateRecordsModal";
 import { StaffAuthModal } from "./components/StaffAuthModal";
 import { LanguageSelectionModal } from "./components/LanguageSelectionModal";
 import { FloatingLanguageSwitcher } from "./components/FloatingLanguageSwitcher";
+import { LiveVoiceModal } from "./components/LiveVoiceModal";
 import { playClinicChime, playSuccessChime } from "./utils/audio";
 import { Lock, ShieldAlert } from "lucide-react";
 
@@ -91,6 +92,7 @@ export default function App() {
   } | null>(null);
   const [showUpdateRecordsModal, setShowUpdateRecordsModal] = useState(false);
   const [showLanguageModal, setShowLanguageModal] = useState(false);
+  const [showLiveVoiceModal, setShowLiveVoiceModal] = useState(false);
 
   // Auto-calculated statistics
   const activeWaitingCount = queue.filter(
@@ -482,6 +484,7 @@ export default function App() {
         authUser={authUser}
         onSignOut={handleSignOut}
         onOpenLanguageModal={() => setShowLanguageModal(true)}
+        onOpenLiveVoice={() => setShowLiveVoiceModal(true)}
       />
 
       {/* Main Viewport Container */}
@@ -496,6 +499,7 @@ export default function App() {
                 onStartWalkIn={() => setKioskSubView("walkin")}
                 onViewQueue={() => setCurrentMode("tv-display")}
                 onUpdateRecords={() => setShowUpdateRecordsModal(true)}
+                onOpenLiveVoice={() => setShowLiveVoiceModal(true)}
                 waitingCount={activeWaitingCount}
                 averageWaitMinutes={averageWaitMinutes}
               />
@@ -722,6 +726,19 @@ export default function App() {
           onClose={() => setShowLanguageModal(false)}
         />
       )}
+
+      {/* Gemini 3.1 Live Voice Assistant Modal */}
+      <LiveVoiceModal
+        isOpen={showLiveVoiceModal}
+        onClose={() => setShowLiveVoiceModal(false)}
+        language={language}
+        onSelectLanguage={setLanguage}
+        onStartWalkIn={() => {
+          setShowLiveVoiceModal(false);
+          setCurrentMode("kiosk");
+          setKioskSubView("walkin");
+        }}
+      />
 
       {/* Persistent Floating Quick Language Switcher (Bottom-Right) */}
       <FloatingLanguageSwitcher

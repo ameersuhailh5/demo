@@ -10,6 +10,8 @@ import {
   Sparkles,
   Leaf,
   Pill,
+  Mic,
+  Radio,
 } from "lucide-react";
 import { playButtonTap } from "../utils/audio";
 
@@ -19,6 +21,7 @@ interface KioskHomeProps {
   onStartWalkIn: () => void;
   onViewQueue: () => void;
   onUpdateRecords: () => void;
+  onOpenLiveVoice?: () => void;
   waitingCount: number;
   averageWaitMinutes: number;
 }
@@ -28,6 +31,7 @@ export const KioskHome: React.FC<KioskHomeProps> = ({
   onStartWalkIn,
   onViewQueue,
   onUpdateRecords,
+  onOpenLiveVoice,
   waitingCount,
   averageWaitMinutes,
 }) => {
@@ -143,6 +147,64 @@ export const KioskHome: React.FC<KioskHomeProps> = ({
           </div>
         </button>
       </div>
+
+      {/* Real-time Gemini 3.1 Live Voice Assistant Banner */}
+      {onOpenLiveVoice && (
+        <div className="mb-6">
+          <button
+            id="btn-kiosk-live-voice-banner"
+            type="button"
+            onClick={onOpenLiveVoice}
+            className="w-full text-left relative p-5 sm:p-6 rounded-3xl border-2 border-teal-500/40 bg-gradient-to-r from-slate-900 via-slate-950 to-teal-950 text-white shadow-xl hover:border-teal-400 hover:shadow-teal-900/20 transition-all duration-200 transform hover:-translate-y-0.5 active:translate-y-0 cursor-pointer overflow-hidden group"
+          >
+            <div className="absolute top-0 right-0 w-64 h-64 bg-teal-500/10 rounded-full blur-3xl pointer-events-none -mr-10 -mt-10"></div>
+            
+            <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="relative flex items-center justify-center w-14 h-14 rounded-2xl bg-teal-500/20 border border-teal-500/40 text-teal-400 shadow-inner group-hover:scale-105 transition-transform">
+                  <Mic className="w-7 h-7 animate-pulse" />
+                  <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500"></span>
+                  </span>
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-teal-950 text-teal-300 border border-teal-700/50 flex items-center gap-1">
+                      <Radio className="w-2.5 h-2.5 text-emerald-400 animate-pulse" />
+                      Gemini 3.1 Live
+                    </span>
+                    <span className="text-xs text-slate-400 hidden sm:inline">• Real-Time Voice Conversation</span>
+                  </div>
+                  <h3 className="text-lg sm:text-xl font-black text-white tracking-tight">
+                    {language === "ml"
+                      ? "തത്സമയ ശബ്ദ സംഭാഷണം (Live Voice AI)"
+                      : language === "hi"
+                      ? "लाइव वॉयस असिस्टेंट (Live Voice AI)"
+                      : "Voice Conversation Assistant"}
+                  </h3>
+                  <p className="text-slate-300 text-xs mt-0.5 max-w-lg leading-relaxed">
+                    {language === "ml"
+                      ? "മെഡിക്കൽ ലക്ഷണങ്ങൾ പറയൂ, രജിസ്ട്രേഷനും ക്ലിനിക്ക് സഹായത്തിനും സ്വാഭാവികമായി സംസാരിക്കാം."
+                      : language === "hi"
+                      ? "अपने लक्षण बोलें और पंजीकरण या क्लिनिक सहायता के लिए स्वाभाविक रूप से बात करें।"
+                      : "Speak naturally in English, Malayalam, or Hindi to describe symptoms or ask clinic questions."}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 self-end sm:self-center">
+                <span className="text-xs font-bold text-teal-400 group-hover:text-teal-300 transition-colors whitespace-nowrap">
+                  Start Voice Call
+                </span>
+                <div className="w-10 h-10 rounded-xl bg-teal-500/20 border border-teal-500/40 text-teal-300 flex items-center justify-center group-hover:bg-teal-500 group-hover:text-slate-950 transition-all">
+                  <ChevronRight className="w-5 h-5" />
+                </div>
+              </div>
+            </div>
+          </button>
+        </div>
+      )}
 
       {/* Secondary Action Cards (2 Columns) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-8">

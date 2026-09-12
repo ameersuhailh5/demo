@@ -33,6 +33,7 @@ interface HeaderProps {
   authUser?: AuthUser | null;
   onSignOut?: () => void;
   onOpenLanguageModal?: () => void;
+  onOpenLiveVoice?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -48,6 +49,7 @@ export const Header: React.FC<HeaderProps> = ({
   authUser,
   onSignOut,
   onOpenLanguageModal,
+  onOpenLiveVoice,
 }) => {
   const t = TRANSLATIONS[language] || TRANSLATIONS.en;
   const [currentTime, setCurrentTime] = useState("");
@@ -282,6 +284,26 @@ export const Header: React.FC<HeaderProps> = ({
               <span>{t.header.ehrVault}</span>
             </button>
           </nav>
+
+          {/* Live Voice AI Assistant Button */}
+          {onOpenLiveVoice && (
+            <button
+              id="btn-header-open-live-voice"
+              type="button"
+              onClick={onOpenLiveVoice}
+              className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-slate-900 to-teal-950 text-teal-300 border border-teal-500/50 shadow-sm hover:border-teal-400 hover:scale-102 transition-all cursor-pointer text-xs font-bold"
+              title="Open Gemini 3.1 Live Voice Assistant"
+            >
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-teal-500"></span>
+              </span>
+              <span className="tracking-tight">Live Voice AI</span>
+              <span className="text-[10px] bg-teal-900/80 text-teal-200 px-1.5 py-0.2 rounded font-mono font-normal">
+                3.1 Live
+              </span>
+            </button>
+          )}
 
           {/* Active Authenticated Staff User Pill & Lock/Sign Out Button */}
           {authUser && (
