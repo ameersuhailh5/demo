@@ -10,8 +10,27 @@ import { GoogleGenAI, LiveServerMessage, Modality } from "@google/genai";
 
 dotenv.config();
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const getFilename = () => {
+  try {
+    if (typeof __filename !== "undefined") return __filename;
+    if (typeof import.meta !== "undefined" && import.meta.url) {
+      return fileURLToPath(import.meta.url);
+    }
+  } catch {}
+  return "";
+};
+
+const getDirname = () => {
+  try {
+    if (typeof __dirname !== "undefined") return __dirname;
+    const fname = getFilename();
+    if (fname) return path.dirname(fname);
+  } catch {}
+  return process.cwd();
+};
+
+const appFilename = getFilename();
+const appDirname = getDirname();
 
 const app = express();
 const PORT = 3000;
