@@ -499,7 +499,6 @@ export default function App() {
                 onStartWalkIn={() => setKioskSubView("walkin")}
                 onViewQueue={() => setCurrentMode("tv-display")}
                 onUpdateRecords={() => setShowUpdateRecordsModal(true)}
-                onOpenLiveVoice={() => setShowLiveVoiceModal(true)}
                 waitingCount={activeWaitingCount}
                 averageWaitMinutes={averageWaitMinutes}
               />

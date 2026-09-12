@@ -49,10 +49,10 @@ export const TicketPassModal: React.FC<TicketPassModalProps> = ({
         {/* Top Header */}
         <div
           className="text-white p-5 text-center relative"
-          style={{ backgroundColor: "#5AA7A7" }}
+          style={{ background: "linear-gradient(135deg, #3B5284 0%, #5BA8A0 100%)" }}
         >
           <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center mx-auto mb-1.5">
-            <CheckCircle2 className="w-6 h-6 text-white" />
+            <CheckCircle2 className="w-6 h-6" style={{ color: "#CBE54E" }} />
           </div>
           <span className="text-[10px] font-bold tracking-wider uppercase opacity-90">
             {t.ticketPass.confirmed}
@@ -68,14 +68,14 @@ export const TicketPassModal: React.FC<TicketPassModalProps> = ({
         <div className="p-5 space-y-4 text-xs">
           <div
             className="text-center py-3 bg-slate-50 border-2 border-dashed rounded-xl"
-            style={{ borderColor: "#96D7C6" }}
+            style={{ borderColor: "#5BA8A0" }}
           >
             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
               {t.ticketPass.ticketNumber}
             </span>
             <span
               className="text-4xl font-black tracking-tight font-mono block my-0.5"
-              style={{ color: "#5AA7A7" }}
+              style={{ color: "#3B5284" }}
             >
               {ticket.ticketNumber}
             </span>
@@ -97,9 +97,9 @@ export const TicketPassModal: React.FC<TicketPassModalProps> = ({
               <span
                 className="font-bold px-2 py-0.5 rounded-full text-[11px] border"
                 style={{
-                  backgroundColor: ticket.treatmentType === "ayurveda" ? "#ecfdf5" : "#f0fdf9",
-                  color: ticket.treatmentType === "ayurveda" ? "#047857" : "#0f766e",
-                  borderColor: ticket.treatmentType === "ayurveda" ? "#a7f3d0" : "#99f6e4",
+                  backgroundColor: ticket.treatmentType === "ayurveda" ? "rgba(148, 180, 71, 0.12)" : "rgba(91, 168, 160, 0.12)",
+                  color: ticket.treatmentType === "ayurveda" ? "#5D6E1E" : "#3B5284",
+                  borderColor: ticket.treatmentType === "ayurveda" ? "#94B447" : "#5BA8A0",
                 }}
               >
                 {ticket.treatmentType === "ayurveda" ? "🌿 " + t.common.ayurveda : "💊 " + t.common.allopathy}
@@ -111,7 +111,7 @@ export const TicketPassModal: React.FC<TicketPassModalProps> = ({
             </div>
             <div className="flex justify-between">
               <span className="text-slate-500">{t.ticketPass.room}:</span>
-              <span className="font-bold" style={{ color: "#5AA7A7" }}>
+              <span className="font-bold" style={{ color: "#5BA8A0" }}>
                 {ticket.assignedRoom}
               </span>
             </div>
@@ -139,7 +139,7 @@ export const TicketPassModal: React.FC<TicketPassModalProps> = ({
             <button
               id="btn-print-ticket-pass"
               onClick={handlePrint}
-              className="flex-1 py-2.5 px-3 rounded-xl border border-slate-300 hover:bg-slate-50 font-semibold text-slate-700 text-xs flex items-center justify-center gap-1.5 transition-colors"
+              className="flex-1 py-2.5 px-3 rounded-xl border border-slate-300 hover:bg-slate-50 font-semibold text-slate-700 text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
             >
               <Printer className="w-3.5 h-3.5" />
               <span>{t.ticketPass.printPass}</span>
@@ -147,11 +147,11 @@ export const TicketPassModal: React.FC<TicketPassModalProps> = ({
             <button
               id="btn-finish-kiosk-session"
               onClick={onClose}
-              className="flex-1 py-2.5 px-3 rounded-xl text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition-colors"
-              style={{ backgroundColor: "#5AA7A7" }}
+              className="flex-1 py-2.5 px-3 rounded-xl text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition-colors cursor-pointer"
+              style={{ backgroundColor: "#3B5284" }}
             >
               <span>{t.ticketPass.done}</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              <ArrowRight className="w-3.5 h-3.5" style={{ color: "#CBE54E" }} />
             </button>
           </div>
         </div>

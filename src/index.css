@@ -1,11 +1,17 @@
 @import "tailwindcss";
 
 @theme {
-  --color-brand-teal: #5AA7A7;
-  --color-brand-mint: #96D7C6;
-  --color-brand-lime: #BAC94A;
-  --color-brand-yellow: #E2D36B;
-  --color-brand-blue: #6C8CBF;
+  --color-brand-navy: #3B5284;
+  --color-brand-teal: #5BA8A0;
+  --color-brand-lime: #CBE54E;
+  --color-brand-olive: #94B447;
+  --color-brand-forest: #5D6E1E;
+
+  --color-palette-1: #3B5284;
+  --color-palette-2: #5BA8A0;
+  --color-palette-3: #CBE54E;
+  --color-palette-4: #94B447;
+  --color-palette-5: #5D6E1E;
 }
 
 /* Custom Typography Families */
@@ -80,87 +86,67 @@
 }
 
 :root {
-  --palette-teal: #5AA7A7;
-  --palette-mint: #96D7C6;
-  --palette-lime: #BAC94A;
-  --palette-yellow: #E2D36B;
-  --palette-blue: #6C8CBF;
+  --color-1: #3B5284;
+  --color-2: #5BA8A0;
+  --color-3: #CBE54E;
+  --color-4: #94B447;
+  --color-5: #5D6E1E;
+
+  --palette-navy: #3B5284;
+  --palette-teal: #5BA8A0;
+  --palette-lime: #CBE54E;
+  --palette-olive: #94B447;
+  --palette-forest: #5D6E1E;
 }
 
-/* Custom Gradient and Accent Helpers */
-.bg-palette-teal {
-  background-color: #5AA7A7;
-}
-.text-palette-teal {
-  color: #5AA7A7;
-}
-.border-palette-teal {
-  border-color: #5AA7A7;
+/* Palette Hex Classes */
+.bg-palette-navy { background-color: #3B5284; }
+.text-palette-navy { color: #3B5284; }
+.border-palette-navy { border-color: #3B5284; }
+
+.bg-palette-teal { background-color: #5BA8A0; }
+.text-palette-teal { color: #5BA8A0; }
+.border-palette-teal { border-color: #5BA8A0; }
+
+.bg-palette-lime { background-color: #CBE54E; }
+.text-palette-lime { color: #5D6E1E; }
+.border-palette-lime { border-color: #CBE54E; }
+
+.bg-palette-olive { background-color: #94B447; }
+.text-palette-olive { color: #94B447; }
+.border-palette-olive { border-color: #94B447; }
+
+.bg-palette-forest { background-color: #5D6E1E; }
+.text-palette-forest { color: #5D6E1E; }
+.border-palette-forest { border-color: #5D6E1E; }
+
+/* Palette Gradients from Reference Image (Dopely 46) */
+.bg-gradient-palette-1 {
+  background: linear-gradient(135deg, #3B5284 0%, #5BA8A0 100%);
 }
 
-.bg-palette-mint {
-  background-color: #96D7C6;
-}
-.text-palette-mint {
-  color: #96D7C6;
-}
-.border-palette-mint {
-  border-color: #96D7C6;
+.bg-gradient-palette-2 {
+  background: linear-gradient(135deg, #5BA8A0 0%, #CBE54E 100%);
 }
 
-.bg-palette-lime {
-  background-color: #BAC94A;
-}
-.text-palette-lime {
-  color: #BAC94A;
-}
-.border-palette-lime {
-  border-color: #BAC94A;
+.bg-gradient-palette-3 {
+  background: linear-gradient(135deg, #CBE54E 0%, #94B447 100%);
 }
 
-.bg-palette-yellow {
-  background-color: #E2D36B;
-}
-.text-palette-yellow {
-  color: #E2D36B;
-}
-.border-palette-yellow {
-  border-color: #E2D36B;
+.bg-gradient-palette-4 {
+  background: linear-gradient(135deg, #94B447 0%, #5D6E1E 100%);
 }
 
-.bg-palette-blue {
-  background-color: #6C8CBF;
-}
-.text-palette-blue {
-  color: #6C8CBF;
-}
-.border-palette-blue {
-  border-color: #6C8CBF;
-}
-
-/* Palette Gradients from Reference Image */
-.bg-gradient-teal-mint {
-  background: linear-gradient(135deg, #5AA7A7 0%, #96D7C6 100%);
-}
-
-.bg-gradient-mint-lime {
-  background: linear-gradient(135deg, #96D7C6 0%, #BAC94A 100%);
-}
-
-.bg-gradient-lime-yellow {
-  background: linear-gradient(135deg, #BAC94A 0%, #E2D36B 100%);
-}
-
-.bg-gradient-yellow-mint {
-  background: linear-gradient(135deg, #E2D36B 0%, #96D7C6 100%);
-}
-
-.bg-gradient-blue-teal {
-  background: linear-gradient(135deg, #6C8CBF 0%, #5AA7A7 100%);
+.bg-gradient-palette-5 {
+  background: linear-gradient(135deg, #5D6E1E 0%, #5BA8A0 100%);
 }
 
 .bg-gradient-hero {
-  background: linear-gradient(135deg, #5AA7A7 0%, #6C8CBF 100%);
+  background: linear-gradient(135deg, #3B5284 0%, #5BA8A0 60%, #94B447 100%);
+}
+
+.bg-gradient-banner {
+  background: linear-gradient(135deg, #3B5284 0%, #5D6E1E 100%);
 }
 
 /* Smooth transitions */

@@ -315,14 +315,14 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
         <button
           id="btn-walkin-demo-prefill"
           onClick={handlePrefillDemo}
-          className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg border transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg border transition-colors cursor-pointer"
           style={{
-            backgroundColor: "#f0fdf9",
-            color: "#5AA7A7",
-            borderColor: "#96D7C6",
+            backgroundColor: "rgba(91, 168, 160, 0.1)",
+            color: "#3B5284",
+            borderColor: "#5BA8A0",
           }}
         >
-          <Sparkles className="w-3.5 h-3.5" />
+          <Sparkles className="w-3.5 h-3.5" style={{ color: "#5BA8A0" }} />
           <span>Auto-Fill Sample</span>
         </button>
       </div>
@@ -333,15 +333,16 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
           {stepsHeader.map((s) => (
             <div key={s.num} className="flex flex-col items-center flex-1">
               <div
-                className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all text-white"
+                className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all"
                 style={{
                   backgroundColor:
                     currentStep === s.num
-                      ? "#5AA7A7"
+                      ? "#3B5284"
                       : currentStep > s.num
-                      ? "#BAC94A"
+                      ? "#94B447"
                       : "#cbd5e1",
-                  boxShadow: currentStep === s.num ? "0 0 0 4px #e0f2fe" : undefined,
+                  color: currentStep > s.num && currentStep !== s.num ? "#ffffff" : "#ffffff",
+                  boxShadow: currentStep === s.num ? "0 0 0 4px rgba(91, 168, 160, 0.3)" : undefined,
                 }}
               >
                 {currentStep > s.num ? "✓" : s.num}
@@ -357,7 +358,7 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
             className="h-full transition-all duration-300"
             style={{
               width: `${((currentStep - 1) / 5) * 100}%`,
-              backgroundColor: "#5AA7A7",
+              background: "linear-gradient(90deg, #3B5284 0%, #5BA8A0 50%, #94B447 100%)",
             }}
           ></div>
         </div>
@@ -503,7 +504,7 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
                   }}
                   className={`text-left p-3.5 rounded-xl border-2 transition-all relative cursor-pointer ${
                     treatmentType === "allopathy"
-                      ? "border-teal-600 bg-teal-50/70 shadow-xs"
+                      ? "border-[#5BA8A0] bg-[#5BA8A0]/10 shadow-xs"
                       : "border-slate-200 hover:border-slate-300 bg-white"
                   }`}
                 >
@@ -511,19 +512,19 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
                     <div className="flex items-center gap-2.5">
                       <div
                         className="w-8 h-8 rounded-lg flex items-center justify-center text-white"
-                        style={{ backgroundColor: "#5AA7A7" }}
+                        style={{ backgroundColor: "#3B5284" }}
                       >
                         <Pill className="w-4 h-4" />
                       </div>
                       <div>
                         <h4 className="font-bold text-slate-900 text-xs">{t.common.allopathy}</h4>
-                        <span className="text-[10px] font-semibold block" style={{ color: "#5AA7A7" }}>
+                        <span className="text-[10px] font-semibold block" style={{ color: "#3B5284" }}>
                           Conventional Western Medicine
                         </span>
                       </div>
                     </div>
                     {treatmentType === "allopathy" && (
-                      <CheckCircle2 className="w-4 h-4" style={{ color: "#5AA7A7" }} />
+                      <CheckCircle2 className="w-4 h-4" style={{ color: "#5BA8A0" }} />
                     )}
                   </div>
                   <p className="text-[11px] text-slate-600 leading-relaxed">
@@ -544,24 +545,24 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
                   }}
                   className={`text-left p-3.5 rounded-xl border-2 transition-all relative cursor-pointer ${
                     treatmentType === "ayurveda"
-                      ? "border-emerald-600 bg-emerald-50/70 shadow-xs"
+                      ? "border-[#94B447] bg-[#94B447]/10 shadow-xs"
                       : "border-slate-200 hover:border-slate-300 bg-white"
                   }`}
                 >
                   <div className="flex items-start justify-between mb-1.5">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center text-white">
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white" style={{ backgroundColor: "#5D6E1E" }}>
                         <Leaf className="w-4 h-4" />
                       </div>
                       <div>
                         <h4 className="font-bold text-slate-900 text-xs">{t.common.ayurveda}</h4>
-                        <span className="text-[10px] text-emerald-700 font-semibold block">
+                        <span className="text-[10px] font-semibold block" style={{ color: "#5D6E1E" }}>
                           Traditional Holistic Medicine
                         </span>
                       </div>
                     </div>
                     {treatmentType === "ayurveda" && (
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                      <CheckCircle2 className="w-4 h-4" style={{ color: "#94B447" }} />
                     )}
                   </div>
                   <p className="text-[11px] text-slate-600 leading-relaxed">
@@ -945,7 +946,7 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
               <button
                 type="button"
                 onClick={() => setCurrentStep(4)}
-                className="text-slate-600 text-xs font-semibold px-3 py-2"
+                className="text-slate-600 text-xs font-semibold px-3 py-2 cursor-pointer hover:text-slate-900"
               >
                 {t.common.back}
               </button>
@@ -953,10 +954,10 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
                 id="btn-step5-next"
                 onClick={performAITriage}
                 disabled={!hasSignature}
-                className="text-white font-bold py-2.5 px-5 rounded-xl flex items-center gap-2 text-xs shadow-xs disabled:opacity-50"
-                style={{ backgroundColor: "#5AA7A7" }}
+                className="text-white font-bold py-2.5 px-5 rounded-xl flex items-center gap-2 text-xs shadow-xs disabled:opacity-50 cursor-pointer"
+                style={{ backgroundColor: "#3B5284" }}
               >
-                <Sparkles className="w-3.5 h-3.5" />
+                <Sparkles className="w-3.5 h-3.5" style={{ color: "#CBE54E" }} />
                 <span>{t.common.submit}</span>
               </button>
             </div>
@@ -1063,10 +1064,10 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
                   <button
                     id="btn-walkin-issue-ticket"
                     onClick={handleFinalSubmit}
-                    className="w-full text-white font-bold py-3.5 px-6 rounded-xl shadow-md text-base flex items-center justify-center gap-2 transition-all"
-                    style={{ backgroundColor: "#5AA7A7" }}
+                    className="w-full text-white font-bold py-3.5 px-6 rounded-xl shadow-md text-base flex items-center justify-center gap-2 transition-all cursor-pointer hover:opacity-95 active:scale-98"
+                    style={{ background: "linear-gradient(135deg, #3B5284 0%, #5BA8A0 100%)" }}
                   >
-                    <CheckCircle2 className="w-5 h-5" />
+                    <CheckCircle2 className="w-5 h-5" style={{ color: "#CBE54E" }} />
                     <span>{t.ticketPass.printPass}</span>
                   </button>
                 </div>
