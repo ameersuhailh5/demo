@@ -6,18 +6,21 @@ import {
   Appointment,
   QueueItem,
   AuditLogEntry,
+  Doctor,
 } from "./types";
 import {
   INITIAL_PATIENTS,
   INITIAL_APPOINTMENTS,
   INITIAL_QUEUE,
   INITIAL_AUDIT_LOGS,
+  INITIAL_DOCTORS,
 } from "./data/mockData";
 import { Header } from "./components/Header";
 import { KioskHome } from "./components/KioskHome";
 import { CheckInFlow } from "./components/CheckInFlow";
 import { WalkInRegistration } from "./components/WalkInRegistration";
-import { StaffPortal } from "./components/StaffPortal";
+import { DoctorPortal } from "./components/DoctorPortal";
+import { AdminDashboard } from "./components/AdminDashboard";
 import { WaitingRoomDisplay } from "./components/WaitingRoomDisplay";
 import { EHRVaultModal } from "./components/EHRVaultModal";
 import { EHRGatewayView } from "./components/EHRGatewayView";
@@ -26,7 +29,7 @@ import { UpdateRecordsModal } from "./components/UpdateRecordsModal";
 import { playClinicChime, playSuccessChime } from "./utils/audio";
 
 export default function App() {
-  // Navigation Mode
+  // Navigation Mode: kiosk | doctor | admin | tv-display | ehr-vault
   const [currentMode, setCurrentMode] = useState<AppMode>("kiosk");
   const [kioskSubView, setKioskSubView] = useState<
     "home" | "checkin" | "walkin" | "queue-check"
@@ -38,7 +41,8 @@ export default function App() {
   const [fontSizeLarge, setFontSizeLarge] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
 
-  // Application State
+  // Application State: Doctors, Patients, Appointments, Queue, Logs
+  const [doctors, setDoctors] = useState<Doctor[]>(INITIAL_DOCTORS);
   const [patients, setPatients] = useState<PatientRecord[]>(INITIAL_PATIENTS);
   const [appointments, setAppointments] = useState<Appointment[]>(
     INITIAL_APPOINTMENTS
@@ -68,6 +72,18 @@ export default function App() {
       Math.max(1, queue.filter((q) => q.status === "waiting").length) || 12
   );
 
+  // Sync initial doctors & patients from Python API if available
+  useEffect(() => {
+    fetch("/api/doctors")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && Array.isArray(data.doctors) && data.doctors.length > 0) {
+          setDoctors(data.doctors);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   // Log an immutable audit entry
   const logAuditEvent = (
     action: string,
@@ -87,14 +103,21 @@ export default function App() {
       ).join("")}`,
     };
     setAuditLogs((prev) => [newLog, ...prev]);
+
+    // Send to Python audit endpoint
+    try {
+      fetch("/api/audit-logs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newLog),
+      }).catch(() => {});
+    } catch {}
   };
 
   // Check-In Completed Handler
   const handleCheckInComplete = (ticket: QueueItem) => {
-    // Add to queue
     setQueue((prev) => [ticket, ...prev]);
 
-    // Update appointment status if applicable
     setAppointments((prev) =>
       prev.map((a) =>
         a.patientName.toLowerCase() === ticket.patientName.toLowerCase()
@@ -108,14 +131,12 @@ export default function App() {
       )
     );
 
-    // Audit trail
     logAuditEvent(
       "CHECK_IN_CONFIRMED",
       ticket.mrn,
-      `Patient ${ticket.patientName} checked in. Assigned ticket #${ticket.ticketNumber} for ${ticket.department} (${ticket.assignedRoom}).`
+      `Patient ${ticket.patientName} checked in. Assigned ticket #${ticket.ticketNumber} for ${ticket.department} (${ticket.assignedRoom}) under ${ticket.doctorName}.`
     );
 
-    // Show ticket modal and return kiosk to home
     setActiveTicketModal(ticket);
     setKioskSubView("home");
   };
@@ -134,14 +155,14 @@ export default function App() {
     logAuditEvent(
       "WALK_IN_REGISTRATION_COMPLETED",
       ticket.mrn,
-      `Walk-in intake registered for ${ticket.patientName}. ESI score ${ticket.esiScore} calculated. Assigned room ${ticket.assignedRoom}.`
+      `Walk-in registered for ${ticket.patientName}. ESI score ${ticket.esiScore} calculated. Assigned room ${ticket.assignedRoom} under ${ticket.doctorName}.`
     );
 
     setActiveTicketModal(ticket);
     setKioskSubView("home");
   };
 
-  // Staff Portal Actions: Call patient
+  // Doctor & Staff: Call patient
   const handleCallPatient = (queueId: string) => {
     if (soundEnabled) {
       playClinicChime();
@@ -163,13 +184,13 @@ export default function App() {
       logAuditEvent(
         "PATIENT_CALLED_TO_ROOM",
         item.mrn,
-        `Ticket #${item.ticketNumber} called to ${item.assignedRoom} by clinical staff.`,
+        `Ticket #${item.ticketNumber} called to ${item.assignedRoom} by ${item.doctorName}.`,
         "attending_md"
       );
     }
   };
 
-  // Staff Portal Actions: Update patient status
+  // Doctor & Staff: Update patient status
   const handleUpdateQueueStatus = (
     queueId: string,
     status: QueueItem["status"]
@@ -185,6 +206,114 @@ export default function App() {
         item.mrn,
         `Queue status updated to ${status} for ticket #${item.ticketNumber}.`,
         "nurse_triage"
+      );
+    }
+  };
+
+  // Admin: Assign / Reassign Doctor to Patient
+  const handleAssignDoctor = (
+    queueId: string,
+    doctorId: string,
+    doctorName: string,
+    room: string,
+    department: string
+  ) => {
+    setQueue((prev) =>
+      prev.map((q) =>
+        q.id === queueId
+          ? {
+              ...q,
+              doctorId,
+              doctorName,
+              assignedRoom: room,
+              department,
+              assignedBy: "admin",
+            }
+          : q
+      )
+    );
+
+    const target = queue.find((q) => q.id === queueId);
+    if (target) {
+      logAuditEvent(
+        "DOCTOR_ASSIGNED_BY_ADMIN",
+        target.mrn,
+        `Admin assigned ${doctorName} (${department} - ${room}) to ticket #${target.ticketNumber}.`,
+        "admin"
+      );
+
+      // Async dispatch to Python backend
+      try {
+        fetch("/api/assign-doctor", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            queueId,
+            ticketNumber: target.ticketNumber,
+            patientName: target.patientName,
+            mrn: target.mrn,
+            doctorId,
+            doctorName,
+            room,
+            department,
+          }),
+        }).catch(() => {});
+      } catch {}
+    }
+  };
+
+  // Admin: Update doctor availability
+  const handleUpdateDoctorAvailability = (
+    doctorId: string,
+    available: boolean
+  ) => {
+    setDoctors((prev) =>
+      prev.map((d) => (d.id === doctorId ? { ...d, available } : d))
+    );
+
+    const targetDoc = doctors.find((d) => d.id === doctorId);
+    if (targetDoc) {
+      logAuditEvent(
+        "DOCTOR_STATUS_CHANGED",
+        "SYSTEM",
+        `Doctor ${targetDoc.name} marked as ${available ? "On Duty" : "Off Duty"}.`,
+        "admin"
+      );
+    }
+  };
+
+  // Admin: Add new doctor
+  const handleAddDoctor = (newDoc: Doctor) => {
+    setDoctors((prev) => [...prev, newDoc]);
+    logAuditEvent(
+      "DOCTOR_REGISTERED",
+      "SYSTEM",
+      `Admin registered ${newDoc.name} (${newDoc.department} - ${newDoc.room}).`,
+      "admin"
+    );
+
+    try {
+      fetch("/api/doctors", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newDoc),
+      }).catch(() => {});
+    } catch {}
+  };
+
+  // Doctor: Save consultation notes
+  const handleSaveConsultationNotes = (queueId: string, notes: string) => {
+    setQueue((prev) =>
+      prev.map((q) => (q.id === queueId ? { ...q, clinicalNotes: notes } : q))
+    );
+
+    const target = queue.find((q) => q.id === queueId);
+    if (target) {
+      logAuditEvent(
+        "CLINICAL_NOTES_RECORDED",
+        target.mrn,
+        `Physician recorded clinical notes for ticket #${target.ticketNumber}.`,
+        "attending_md"
       );
     }
   };
@@ -248,7 +377,7 @@ export default function App() {
 
       {/* Main Viewport Container */}
       <main className="flex-1 pb-12">
-        {/* MODE 1: PATIENT SELF-SERVICE KIOSK */}
+        {/* ROLE 1: PATIENT SELF-SERVICE KIOSK */}
         {currentMode === "kiosk" && (
           <div>
             {kioskSubView === "home" && (
@@ -290,27 +419,41 @@ export default function App() {
           </div>
         )}
 
-        {/* MODE 2: STAFF CLINICAL PORTAL */}
-        {currentMode === "staff" && (
-          <StaffPortal
-            queue={queue}
+        {/* ROLE 2: DOCTOR WORKSTATION & ALLOCATION PORTAL */}
+        {currentMode === "doctor" && (
+          <DoctorPortal
+            doctors={doctors}
             patients={patients}
+            queue={queue}
             onCallPatient={handleCallPatient}
             onUpdateStatus={handleUpdateQueueStatus}
             onOpenEHR={handleOpenEHR}
-            onAddNewWalkIn={() => {
-              setCurrentMode("kiosk");
-              setKioskSubView("walkin");
-            }}
+            onSaveConsultationNotes={handleSaveConsultationNotes}
           />
         )}
 
-        {/* MODE 3: WAITING ROOM TV MONITOR */}
+        {/* ROLE 3: CLINIC ADMIN DISPATCH & ASSIGNMENT MANAGEMENT */}
+        {currentMode === "admin" && (
+          <AdminDashboard
+            doctors={doctors}
+            patients={patients}
+            queue={queue}
+            appointments={appointments}
+            onAssignDoctor={handleAssignDoctor}
+            onUpdateDoctorAvailability={handleUpdateDoctorAvailability}
+            onAddDoctor={handleAddDoctor}
+            onInspectPatient={(pat, item) =>
+              setActiveEHRModal({ patient: pat, queueItem: item })
+            }
+          />
+        )}
+
+        {/* ROLE 4: LOBBY TV CALLING DISPLAY */}
         {currentMode === "tv-display" && (
           <WaitingRoomDisplay queue={queue} />
         )}
 
-        {/* MODE 4: SECURE EHR & FHIR GATEWAY VIEW */}
+        {/* ROLE 5: EHR VAULT & HL7 FHIR GATEWAY */}
         {currentMode === "ehr-vault" && (
           <EHRGatewayView
             patients={patients}

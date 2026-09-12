@@ -1,4 +1,62 @@
-import { PatientRecord, Appointment, QueueItem, AuditLogEntry } from "../types";
+import { PatientRecord, Appointment, QueueItem, AuditLogEntry, Doctor } from "../types";
+
+export const INITIAL_DOCTORS: Doctor[] = [
+  {
+    id: "doc-1",
+    name: "Dr. Sarah Jenkins, MD",
+    title: "Lead Attending Physician",
+    specialty: "Internal Medicine & Urgent Care",
+    department: "Urgent Care",
+    room: "Triage Bay 1",
+    available: true,
+    phone: "(555) 019-2831",
+    email: "s.jenkins@clinic.org",
+  },
+  {
+    id: "doc-2",
+    name: "Dr. Gregory House, MD",
+    title: "Senior Diagnostician",
+    specialty: "Pulmonology & Diagnostics",
+    department: "Pulmonology",
+    room: "Suite 1B",
+    available: true,
+    phone: "(555) 019-2832",
+    email: "g.house@clinic.org",
+  },
+  {
+    id: "doc-3",
+    name: "Dr. Alisha Patel, DO",
+    title: "Family Physician",
+    specialty: "Endocrinology & Primary Care",
+    department: "Family Practice",
+    room: "Room 4A",
+    available: true,
+    phone: "(555) 019-2833",
+    email: "a.patel@clinic.org",
+  },
+  {
+    id: "doc-4",
+    name: "Dr. Robert Vance, MD",
+    title: "Cardiologist",
+    specialty: "Cardiology & Vascular Health",
+    department: "Cardiology",
+    room: "Room 2C",
+    available: true,
+    phone: "(555) 019-2834",
+    email: "r.vance@clinic.org",
+  },
+  {
+    id: "doc-5",
+    name: "Dr. Elena Rostova, MD",
+    title: "Pediatric & General Specialist",
+    specialty: "General Practice & Pediatrics",
+    department: "Pediatrics",
+    room: "Room 5B",
+    available: true,
+    phone: "(555) 019-2835",
+    email: "e.rostova@clinic.org",
+  },
+];
 
 export const INITIAL_PATIENTS: PatientRecord[] = [
   {
@@ -101,6 +159,39 @@ export const INITIAL_PATIENTS: PatientRecord[] = [
       ],
     },
   },
+  {
+    id: "pat-4",
+    mrn: "MRN-50912",
+    firstName: "Rachel",
+    lastName: "Kim",
+    dob: "1998-02-17",
+    gender: "female",
+    phone: "(555) 987-6543",
+    email: "rachel.kim@example.com",
+    address: "310 Meadow Lane, Springfield",
+    emergencyContact: {
+      name: "David Kim",
+      relationship: "Father",
+      phone: "(555) 987-6540",
+    },
+    insurance: {
+      provider: "Cigna Health",
+      policyNumber: "CIG-449120",
+      groupNumber: "GRP-7721",
+      copayAmount: 20,
+      status: "verified",
+    },
+    medicalHistory: {
+      allergies: ["Aspirin"],
+      medications: ["Sumatriptan 50mg"],
+      chronicConditions: ["Chronic Migraine"],
+      bloodType: "O+",
+      vaccinations: [
+        { name: "COVID-19 Bivalent", date: "2024-08-15" },
+        { name: "Influenza", date: "2024-10-20" },
+      ],
+    },
+  },
 ];
 
 export const INITIAL_APPOINTMENTS: Appointment[] = [
@@ -113,6 +204,7 @@ export const INITIAL_APPOINTMENTS: Appointment[] = [
     phone: "(555) 234-5678",
     time: "09:30 AM",
     date: "Today",
+    doctorId: "doc-1",
     doctorName: "Dr. Sarah Jenkins, MD",
     specialty: "Cardiovascular & Internal Medicine",
     department: "Internal Medicine",
@@ -131,6 +223,7 @@ export const INITIAL_APPOINTMENTS: Appointment[] = [
     phone: "(555) 345-6789",
     time: "10:00 AM",
     date: "Today",
+    doctorId: "doc-2",
     doctorName: "Dr. Gregory House, MD",
     specialty: "Diagnostic & Pulmonary Medicine",
     department: "Pulmonology",
@@ -149,6 +242,7 @@ export const INITIAL_APPOINTMENTS: Appointment[] = [
     phone: "(555) 456-7890",
     time: "10:15 AM",
     date: "Today",
+    doctorId: "doc-3",
     doctorName: "Dr. Alisha Patel, DO",
     specialty: "Endocrinology & Primary Care",
     department: "Family Practice",
@@ -171,6 +265,7 @@ export const INITIAL_QUEUE: QueueItem[] = [
     mrn: "MRN-66102",
     checkInTime: "09:12 AM",
     appointmentTime: "10:15 AM",
+    doctorId: "doc-3",
     doctorName: "Dr. Alisha Patel, DO",
     department: "Family Practice",
     assignedRoom: "Room 4A",
@@ -186,7 +281,7 @@ export const INITIAL_QUEUE: QueueItem[] = [
     estimatedWaitMinutes: 6,
     triageEvaluation: {
       triageScore: 4,
-      urgencyCategory: "Routine / Non-Urgent (ESI 4)",
+      urgencyCategory: "Routine (ESI 4)",
       recommendedRoom: "Room 4A",
       vitalsToCheck: ["Blood Pressure", "Random Blood Glucose", "Weight"],
       clinicalSummary: "Patient presents for scheduled 3-month diabetes follow-up. Vital signs stable.",
@@ -197,8 +292,10 @@ export const INITIAL_QUEUE: QueueItem[] = [
     id: "q-2",
     ticketNumber: "W-201",
     patientName: "Rachel Kim",
+    patientId: "pat-4",
     mrn: "MRN-50912",
     checkInTime: "09:18 AM",
+    doctorId: "doc-1",
     doctorName: "Dr. Sarah Jenkins, MD",
     department: "Urgent Care",
     assignedRoom: "Triage Bay 2",
@@ -219,7 +316,7 @@ export const INITIAL_QUEUE: QueueItem[] = [
       recommendedRoom: "Triage Bay 2",
       vitalsToCheck: ["Blood Pressure", "Heart Rate", "Neurological check"],
       clinicalSummary: "Walk-in patient reporting 7/10 throbbing migraine with nausea. No focal deficits reported.",
-      suggestedNursingNotes: "Place in low-stimulus, dim-lighted room; offer emesis basin.",
+      suggestedNursingNotes: "Place in low-stimulus room; offer cold compress.",
     },
   },
 ];
@@ -270,7 +367,7 @@ export const INITIAL_AUDIT_LOGS: AuditLogEntry[] = [
     userRole: "patient_kiosk",
     action: "CHECK_IN_COMPLETED",
     patientMRN: "MRN-66102",
-    details: "Automated check-in verified via Confirmation Code MK-103. Copay $20 collected.",
+    details: "Automated check-in verified via code MK-103. Copay $20 collected.",
     securityHash: "sha256:7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069",
   },
   {
@@ -279,7 +376,7 @@ export const INITIAL_AUDIT_LOGS: AuditLogEntry[] = [
     userRole: "patient_kiosk",
     action: "WALK_IN_REGISTRATION",
     patientMRN: "MRN-50912",
-    details: "New walk-in intake registered. ESI Score 3 computed with consent signed digitally.",
+    details: "Walk-in intake registered. ESI Score 3 computed.",
     securityHash: "sha256:4b227777d4dd1fc61c6f884f48641d02b4d121d3fd328cb08b5531fcacdabf8a",
   },
   {

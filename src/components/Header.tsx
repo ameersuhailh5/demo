@@ -174,7 +174,7 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               id="tab-kiosk-mode"
               onClick={() => onSelectMode("kiosk")}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
                 currentMode === "kiosk"
                   ? "bg-white shadow-xs font-bold"
                   : "text-slate-600 hover:text-slate-900"
@@ -183,27 +183,43 @@ export const Header: React.FC<HeaderProps> = ({
                 color: currentMode === "kiosk" ? "#5AA7A7" : undefined,
               }}
             >
-              <Users className="w-4 h-4" style={{ color: "#5AA7A7" }} />
+              <Users className="w-3.5 h-3.5" style={{ color: "#5AA7A7" }} />
               <span>Patient Kiosk</span>
             </button>
 
             <button
-              id="tab-staff-mode"
-              onClick={() => onSelectMode("staff")}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg transition-all ${
-                currentMode === "staff"
+              id="tab-doctor-mode"
+              onClick={() => onSelectMode("doctor")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
+                currentMode === "doctor"
                   ? "bg-white shadow-xs font-bold"
                   : "text-slate-600 hover:text-slate-900"
               }`}
               style={{
-                color: currentMode === "staff" ? "#6C8CBF" : undefined,
+                color: currentMode === "doctor" ? "#5AA7A7" : undefined,
               }}
             >
-              <Stethoscope className="w-4 h-4" style={{ color: "#6C8CBF" }} />
-              <span>Staff Desk</span>
+              <Stethoscope className="w-3.5 h-3.5" style={{ color: "#5AA7A7" }} />
+              <span>Doctor Portal</span>
+            </button>
+
+            <button
+              id="tab-admin-mode"
+              onClick={() => onSelectMode("admin")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
+                currentMode === "admin"
+                  ? "bg-white shadow-xs font-bold"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
+              style={{
+                color: currentMode === "admin" ? "#6C8CBF" : undefined,
+              }}
+            >
+              <Users className="w-3.5 h-3.5" style={{ color: "#6C8CBF" }} />
+              <span>Admin</span>
               {activeWaitingCount > 0 && (
                 <span
-                  className="ml-1 text-slate-900 text-[10px] font-bold px-1.5 py-0.2 rounded-full"
+                  className="ml-0.5 text-slate-900 text-[10px] font-bold px-1.5 py-0.2 rounded-full"
                   style={{ backgroundColor: "#E2D36B" }}
                 >
                   {activeWaitingCount}
@@ -214,7 +230,7 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               id="tab-tv-mode"
               onClick={() => onSelectMode("tv-display")}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
                 currentMode === "tv-display"
                   ? "bg-white shadow-xs font-bold"
                   : "text-slate-600 hover:text-slate-900"
@@ -223,14 +239,14 @@ export const Header: React.FC<HeaderProps> = ({
                 color: currentMode === "tv-display" ? "#5AA7A7" : undefined,
               }}
             >
-              <Tv className="w-4 h-4" style={{ color: "#5AA7A7" }} />
-              <span>Lobby Display</span>
+              <Tv className="w-3.5 h-3.5" style={{ color: "#5AA7A7" }} />
+              <span>Lobby</span>
             </button>
 
             <button
               id="tab-ehr-mode"
               onClick={() => onSelectMode("ehr-vault")}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
                 currentMode === "ehr-vault"
                   ? "bg-white shadow-xs font-bold"
                   : "text-slate-600 hover:text-slate-900"
@@ -239,8 +255,8 @@ export const Header: React.FC<HeaderProps> = ({
                 color: currentMode === "ehr-vault" ? "#6C8CBF" : undefined,
               }}
             >
-              <Database className="w-4 h-4" style={{ color: "#6C8CBF" }} />
-              <span>EHR Gateway</span>
+              <Database className="w-3.5 h-3.5" style={{ color: "#6C8CBF" }} />
+              <span>EHR</span>
             </button>
           </nav>
         </div>

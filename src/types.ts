@@ -1,8 +1,21 @@
-export type AppMode = "kiosk" | "staff" | "tv-display" | "ehr-vault";
+export type AppMode = "kiosk" | "doctor" | "admin" | "tv-display" | "ehr-vault";
 
 export type Language = "en" | "es" | "zh";
 
 export type UrgencyLevel = "routine" | "moderate" | "urgent" | "emergent" | "critical";
+
+export interface Doctor {
+  id: string;
+  name: string;
+  title: string;
+  specialty: string;
+  department: string;
+  room: string;
+  available: boolean;
+  phone?: string;
+  email?: string;
+  activePatientCount?: number;
+}
 
 export interface PatientRecord {
   id: string;
@@ -45,6 +58,7 @@ export interface Appointment {
   phone: string;
   time: string;
   date: string;
+  doctorId?: string;
   doctorName: string;
   specialty: string;
   department: string;
@@ -75,6 +89,7 @@ export interface QueueItem {
   mrn: string;
   checkInTime: string;
   appointmentTime?: string;
+  doctorId?: string;
   doctorName: string;
   department: string;
   assignedRoom: string;
@@ -90,12 +105,15 @@ export interface QueueItem {
   signatureCompleted: boolean;
   calledAt?: string;
   estimatedWaitMinutes: number;
+  clinicalNotes?: string;
+  prescriptionsGiven?: string[];
+  assignedBy?: "system" | "admin" | "kiosk";
 }
 
 export interface AuditLogEntry {
   id: string;
   timestamp: string;
-  userRole: "patient_kiosk" | "nurse_triage" | "attending_md" | "reception_desk";
+  userRole: "patient_kiosk" | "nurse_triage" | "attending_md" | "admin" | "reception_desk" | "system";
   action: string;
   patientMRN: string;
   details: string;
