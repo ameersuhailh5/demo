@@ -10,15 +10,16 @@ import {
   Sparkles,
   Leaf,
   Pill,
+  Mic,
 } from "lucide-react";
 import { playButtonTap } from "../utils/audio";
 
 interface KioskHomeProps {
   language: Language;
-  onSelectLanguage?: (lang: Language) => void;
   onStartWalkIn: () => void;
   onViewQueue: () => void;
   onUpdateRecords: () => void;
+  onOpenTranscribe?: () => void;
   waitingCount: number;
   averageWaitMinutes: number;
 }
@@ -28,6 +29,7 @@ export const KioskHome: React.FC<KioskHomeProps> = ({
   onStartWalkIn,
   onViewQueue,
   onUpdateRecords,
+  onOpenTranscribe,
   waitingCount,
   averageWaitMinutes,
 }) => {
@@ -36,16 +38,16 @@ export const KioskHome: React.FC<KioskHomeProps> = ({
   return (
     <div className="max-w-4xl mx-auto px-4 py-6 sm:py-8">
       {/* Header Banner */}
-      <div className="text-center mb-8 sm:mb-10">
+      <div className="text-center mb-6 sm:mb-8">
         <div
           className="inline-flex items-center gap-2 text-xs font-bold px-3.5 py-1.5 rounded-full mb-3 border shadow-2xs"
           style={{
-            backgroundColor: "rgba(91, 168, 160, 0.08)",
-            color: "#3B5284",
-            borderColor: "#5BA8A0",
+            backgroundColor: "#ECFCF9",
+            color: "#105370",
+            borderColor: "#16C2C4",
           }}
         >
-          <Sparkles className="w-3.5 h-3.5" style={{ color: "#5BA8A0" }} />
+          <Sparkles className="w-3.5 h-3.5" style={{ color: "#16C2C4" }} />
           <span>Intelligent Care Routing • Allopathy & Ayurveda</span>
         </div>
         <h1 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
@@ -60,7 +62,7 @@ export const KioskHome: React.FC<KioskHomeProps> = ({
           <div className="flex items-center gap-2">
             <span
               className="w-2.5 h-2.5 rounded-full animate-pulse"
-              style={{ backgroundColor: "#94B447" }}
+              style={{ backgroundColor: "#FF5353" }}
             ></span>
             <span>
               <strong className="text-slate-900">{waitingCount}</strong> {t.kioskHome.waitingCountSuffix}
@@ -68,7 +70,7 @@ export const KioskHome: React.FC<KioskHomeProps> = ({
           </div>
           <span className="text-slate-300">|</span>
           <div className="flex items-center gap-2">
-            <Clock className="w-4 h-4" style={{ color: "#5BA8A0" }} />
+            <Clock className="w-4 h-4" style={{ color: "#16C2C4" }} />
             <span>
               {t.kioskHome.avgWait}: <strong className="text-slate-900">{averageWaitMinutes} {t.common.mins}</strong>
             </span>
@@ -83,8 +85,8 @@ export const KioskHome: React.FC<KioskHomeProps> = ({
           onClick={onStartWalkIn}
           className="w-full text-left relative text-white p-7 sm:p-9 rounded-3xl shadow-xl border transition-all duration-200 transform hover:-translate-y-1 active:translate-y-0 cursor-pointer overflow-hidden group"
           style={{
-            background: "linear-gradient(135deg, #3B5284 0%, #5BA8A0 55%, #94B447 100%)",
-            borderColor: "#5BA8A0",
+            background: "linear-gradient(135deg, #105370 0%, #16C2C4 55%, #8C2727 100%)",
+            borderColor: "#16C2C4",
           }}
         >
           {/* Subtle background glow */}
@@ -99,7 +101,7 @@ export const KioskHome: React.FC<KioskHomeProps> = ({
                 <div>
                   <span
                     className="text-slate-950 text-xs font-black px-3 py-1 rounded-full shadow-xs uppercase tracking-wide inline-block"
-                    style={{ backgroundColor: "#CBE54E" }}
+                    style={{ backgroundColor: "#FF5353" }}
                   >
                     {t.kioskHome.walkinBadge}
                   </span>
@@ -123,7 +125,7 @@ export const KioskHome: React.FC<KioskHomeProps> = ({
                   <span>{t.common.allopathy}</span>
                 </span>
                 <span className="inline-flex items-center gap-1 bg-white/20 backdrop-blur-xs px-2.5 py-1 rounded-lg text-white font-semibold">
-                  <Leaf className="w-3.5 h-3.5" style={{ color: "#CBE54E" }} />
+                  <Leaf className="w-3.5 h-3.5" style={{ color: "#FF5353" }} />
                   <span>{t.common.ayurveda}</span>
                 </span>
               </div>
@@ -132,7 +134,7 @@ export const KioskHome: React.FC<KioskHomeProps> = ({
             <div className="flex sm:flex-col items-center justify-between sm:justify-center gap-3 border-t md:border-t-0 md:border-l border-white/20 pt-4 md:pt-0 md:pl-6">
               <div
                 className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-md group-hover:scale-110 group-hover:translate-x-1 transition-all duration-200"
-                style={{ backgroundColor: "#ffffff", color: "#3B5284" }}
+                style={{ backgroundColor: "#ffffff", color: "#105370" }}
               >
                 <ChevronRight className="w-7 h-7" />
               </div>
@@ -144,76 +146,117 @@ export const KioskHome: React.FC<KioskHomeProps> = ({
         </button>
       </div>
 
-      {/* Secondary Action Cards (2 Columns) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-8">
-        {/* Card 1: Live Queue Monitor */}
+      {/* Secondary Action Cards (3 Columns) */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5 mb-8">
+        {/* Card 1: Audio Transcription (gemini-3.5-transcribe) */}
+        {onOpenTranscribe && (
+          <button
+            id="btn-kiosk-audio-transcribe"
+            onClick={onOpenTranscribe}
+            className="group text-left relative bg-white hover:bg-slate-50 text-slate-900 p-5 sm:p-6 rounded-2xl shadow-xs border transition-all duration-200 transform hover:-translate-y-0.5 active:translate-y-0 flex flex-col justify-between cursor-pointer"
+            style={{ borderColor: "#16C2C4" }}
+          >
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <div
+                  className="w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-xs"
+                  style={{ backgroundColor: "#105370" }}
+                >
+                  <Mic className="w-6 h-6" style={{ color: "#FF5353" }} />
+                </div>
+                <span
+                  className="text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider text-slate-950 font-mono"
+                  style={{ backgroundColor: "#FF5353" }}
+                >
+                  3.5 Transcribe
+                </span>
+              </div>
+              <h3 className="text-base sm:text-lg font-bold text-slate-900 mb-1">
+                Transcribe Audio
+              </h3>
+              <p className="text-slate-600 text-xs leading-relaxed">
+                Record your voice with mic to transcribe clinical notes or complaints in English, മലയാളം, or हिन्दी.
+              </p>
+            </div>
+
+            <div
+              className="mt-4 flex items-center justify-between text-xs font-bold pt-3 border-t border-slate-100"
+              style={{ color: "#105370" }}
+            >
+              <span>Record & Transcribe</span>
+              <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </div>
+          </button>
+        )}
+
+        {/* Card 2: Live Queue Monitor */}
         <button
           id="btn-kiosk-queue-tracker"
           onClick={onViewQueue}
-          className="group text-left relative bg-white hover:bg-slate-50 text-slate-900 p-6 rounded-2xl shadow-xs border transition-all duration-200 transform hover:-translate-y-0.5 active:translate-y-0 flex flex-col justify-between cursor-pointer"
-          style={{ borderColor: "#94B447" }}
+          className="group text-left relative bg-white hover:bg-slate-50 text-slate-900 p-5 sm:p-6 rounded-2xl shadow-xs border transition-all duration-200 transform hover:-translate-y-0.5 active:translate-y-0 flex flex-col justify-between cursor-pointer"
+          style={{ borderColor: "#FF5353" }}
         >
           <div>
             <div className="flex items-center justify-between mb-3">
               <div
                 className="w-12 h-12 rounded-xl flex items-center justify-center"
-                style={{ backgroundColor: "rgba(148, 180, 71, 0.15)", color: "#5D6E1E" }}
+                style={{ backgroundColor: "rgba(255, 83, 83, 0.15)", color: "#8C2727" }}
               >
-                <Clock className="w-6 h-6" style={{ color: "#5D6E1E" }} />
+                <Clock className="w-6 h-6" style={{ color: "#8C2727" }} />
               </div>
               <span
-                className="text-xs font-bold px-2.5 py-1 rounded-full text-slate-900"
-                style={{ backgroundColor: "#CBE54E" }}
+                className="text-xs font-bold px-2.5 py-1 rounded-full text-slate-950"
+                style={{ backgroundColor: "#FF5353" }}
               >
                 Live Monitor
               </span>
             </div>
-            <h3 className="text-lg font-bold text-slate-900 mb-1">
+            <h3 className="text-base sm:text-lg font-bold text-slate-900 mb-1">
               {t.kioskHome.queueTitle}
             </h3>
             <p className="text-slate-600 text-xs leading-relaxed">{t.kioskHome.queueDesc}</p>
           </div>
 
           <div
-            className="mt-5 flex items-center justify-between text-xs font-bold pt-3 border-t border-slate-100"
-            style={{ color: "#5D6E1E" }}
+            className="mt-4 flex items-center justify-between text-xs font-bold pt-3 border-t border-slate-100"
+            style={{ color: "#8C2727" }}
           >
             <span>View Calling Screen</span>
             <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </div>
         </button>
 
-        {/* Card 2: Records & Insurance */}
+        {/* Card 3: Records & Insurance */}
         <button
           id="btn-kiosk-records-update"
           onClick={onUpdateRecords}
-          className="group text-left relative bg-white hover:bg-slate-50 text-slate-900 p-6 rounded-2xl shadow-xs border transition-all duration-200 transform hover:-translate-y-0.5 active:translate-y-0 flex flex-col justify-between cursor-pointer"
-          style={{ borderColor: "#5BA8A0" }}
+          className="group text-left relative bg-white hover:bg-slate-50 text-slate-900 p-5 sm:p-6 rounded-2xl shadow-xs border transition-all duration-200 transform hover:-translate-y-0.5 active:translate-y-0 flex flex-col justify-between cursor-pointer"
+          style={{ borderColor: "#16C2C4" }}
         >
           <div>
             <div className="flex items-center justify-between mb-3">
               <div
                 className="w-12 h-12 rounded-xl flex items-center justify-center"
-                style={{ backgroundColor: "rgba(91, 168, 160, 0.15)", color: "#3B5284" }}
+                style={{ backgroundColor: "rgba(22, 194, 196, 0.15)", color: "#105370" }}
               >
-                <FileCheck className="w-6 h-6" style={{ color: "#5BA8A0" }} />
+                <FileCheck className="w-6 h-6" style={{ color: "#16C2C4" }} />
               </div>
               <span
                 className="text-xs font-bold px-2.5 py-1 rounded-full text-white"
-                style={{ backgroundColor: "#3B5284" }}
+                style={{ backgroundColor: "#105370" }}
               >
                 Card & Insurance
               </span>
             </div>
-            <h3 className="text-lg font-bold text-slate-900 mb-1">
+            <h3 className="text-base sm:text-lg font-bold text-slate-900 mb-1">
               {t.kioskHome.recordsTitle}
             </h3>
             <p className="text-slate-600 text-xs leading-relaxed">{t.kioskHome.recordsDesc}</p>
           </div>
 
           <div
-            className="mt-5 flex items-center justify-between text-xs font-bold pt-3 border-t border-slate-100"
-            style={{ color: "#3B5284" }}
+            className="mt-4 flex items-center justify-between text-xs font-bold pt-3 border-t border-slate-100"
+            style={{ color: "#105370" }}
           >
             <span>{t.records.title}</span>
             <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -224,7 +267,7 @@ export const KioskHome: React.FC<KioskHomeProps> = ({
       {/* Security & HIPAA Footer */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 border-t border-slate-200 pt-5">
         <div className="flex items-center gap-2">
-          <Shield className="w-4 h-4" style={{ color: "#5BA8A0" }} />
+          <Shield className="w-4 h-4" style={{ color: "#16C2C4" }} />
           <span>{t.kioskHome.hipaaBadge}</span>
         </div>
         <div className="flex items-center gap-4 text-slate-400">

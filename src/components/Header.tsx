@@ -18,6 +18,7 @@ import {
   LogOut,
   ShieldCheck,
   Globe2,
+  Mic,
 } from "lucide-react";
 
 interface HeaderProps {
@@ -34,6 +35,7 @@ interface HeaderProps {
   onSignOut?: () => void;
   onOpenLanguageModal?: () => void;
   onOpenLiveVoice?: () => void;
+  onOpenTranscribe?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -50,6 +52,7 @@ export const Header: React.FC<HeaderProps> = ({
   onSignOut,
   onOpenLanguageModal,
   onOpenLiveVoice,
+  onOpenTranscribe,
 }) => {
   const t = TRANSLATIONS[language] || TRANSLATIONS.en;
   const [currentTime, setCurrentTime] = useState("");
@@ -72,23 +75,23 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="bg-slate-900 text-slate-300 text-xs px-4 py-1.5 flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-3">
           {/* Stack badge */}
-          <span className="flex items-center gap-1.5 font-medium text-[11px]" style={{ color: "#5BA8A0" }}>
-            <Terminal className="w-3.5 h-3.5" style={{ color: "#CBE54E" }} />
+          <span className="flex items-center gap-1.5 font-medium text-[11px]" style={{ color: "#16C2C4" }}>
+            <Terminal className="w-3.5 h-3.5" style={{ color: "#FF5353" }} />
             <span>Java & React Core</span>
           </span>
 
           <span className="text-slate-600 hidden sm:inline">|</span>
 
           {/* HL7 FHIR status badge */}
-          <span className="flex items-center gap-1.5 font-medium text-[11px]" style={{ color: "#94B447" }}>
-            <span className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: "#CBE54E" }}></span>
+          <span className="flex items-center gap-1.5 font-medium text-[11px]" style={{ color: "#16C2C4" }}>
+            <span className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: "#FF5353" }}></span>
             <span>FHIR R4 TLS 1.3</span>
           </span>
         </div>
 
         <div className="flex items-center gap-3">
           {/* Emergency Alert */}
-          <div className="flex items-center gap-1 text-[11px]" style={{ color: "#CBE54E" }}>
+          <div className="flex items-center gap-1 text-[11px]" style={{ color: "#FF5353" }}>
             <AlertTriangle className="w-3.5 h-3.5" />
             <span className="hidden md:inline">{t.header.emergency}</span>
           </div>
@@ -245,7 +248,7 @@ export const Header: React.FC<HeaderProps> = ({
               {activeWaitingCount > 0 && (
                 <span
                   className="ml-0.5 text-slate-950 text-[10px] font-black px-1.5 py-0.2 rounded-full"
-                  style={{ backgroundColor: "#CBE54E" }}
+                  style={{ backgroundColor: "#FF5353" }}
                 >
                   {activeWaitingCount}
                 </span>
@@ -261,10 +264,10 @@ export const Header: React.FC<HeaderProps> = ({
                   : "text-slate-600 hover:text-slate-900"
               }`}
               style={{
-                color: currentMode === "tv-display" ? "#94B447" : undefined,
+                color: currentMode === "tv-display" ? "#16C2C4" : undefined,
               }}
             >
-              <Tv className="w-3.5 h-3.5" style={{ color: currentMode === "tv-display" ? "#94B447" : undefined }} />
+              <Tv className="w-3.5 h-3.5" style={{ color: currentMode === "tv-display" ? "#16C2C4" : undefined }} />
               <span>{t.header.waitingLobby}</span>
             </button>
 
@@ -277,13 +280,33 @@ export const Header: React.FC<HeaderProps> = ({
                   : "text-slate-600 hover:text-slate-900"
               }`}
               style={{
-                color: currentMode === "ehr-vault" ? "#5D6E1E" : undefined,
+                color: currentMode === "ehr-vault" ? "#8C2727" : undefined,
               }}
             >
-              <Database className="w-3.5 h-3.5" style={{ color: currentMode === "ehr-vault" ? "#5D6E1E" : undefined }} />
+              <Database className="w-3.5 h-3.5" style={{ color: currentMode === "ehr-vault" ? "#8C2727" : undefined }} />
               <span>{t.header.ehrVault}</span>
             </button>
           </nav>
+
+          {/* Transcribe Audio (gemini-3.5-transcribe) Button */}
+          {onOpenTranscribe && (
+            <button
+              id="btn-header-open-transcribe"
+              type="button"
+              onClick={onOpenTranscribe}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-slate-800 bg-slate-100 hover:bg-slate-200 border border-slate-300 shadow-xs hover:scale-102 transition-all cursor-pointer text-xs font-bold"
+              title="Transcribe Audio with Gemini 3.5 Transcribe"
+            >
+              <Mic className="w-3.5 h-3.5" style={{ color: "#105370" }} />
+              <span className="tracking-tight">Transcribe Audio</span>
+              <span
+                className="text-[9px] text-slate-950 font-extrabold px-1.5 py-0.2 rounded font-mono"
+                style={{ backgroundColor: "#FF5353" }}
+              >
+                3.5 STT
+              </span>
+            </button>
+          )}
 
           {/* Live Voice AI Assistant Button */}
           {onOpenLiveVoice && (
@@ -293,17 +316,17 @@ export const Header: React.FC<HeaderProps> = ({
               onClick={onOpenLiveVoice}
               className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-white shadow-sm hover:scale-102 transition-all cursor-pointer text-xs font-bold"
               style={{
-                background: "linear-gradient(135deg, #3B5284 0%, #5BA8A0 100%)",
-                border: "1px solid #5BA8A0",
+                background: "linear-gradient(135deg, #105370 0%, #16C2C4 100%)",
+                border: "1px solid #16C2C4",
               }}
               title="Open Gemini 3.1 Live Voice Assistant"
             >
               <span className="relative flex h-2.5 w-2.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-lime-300 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5" style={{ backgroundColor: "#CBE54E" }}></span>
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5" style={{ backgroundColor: "#FF5353" }}></span>
               </span>
               <span className="tracking-tight">Live Voice AI</span>
-              <span className="text-[10px] text-slate-900 font-bold px-1.5 py-0.2 rounded font-mono" style={{ backgroundColor: "#CBE54E" }}>
+              <span className="text-[10px] text-slate-950 font-bold px-1.5 py-0.2 rounded font-mono" style={{ backgroundColor: "#FF5353" }}>
                 3.1 Live
               </span>
             </button>
@@ -323,9 +346,9 @@ export const Header: React.FC<HeaderProps> = ({
                   style={{
                     backgroundColor:
                       authUser.role === "admin"
-                        ? "rgba(59, 82, 132, 0.15)"
-                        : "rgba(91, 168, 160, 0.15)",
-                    color: authUser.role === "admin" ? "#3B5284" : "#5BA8A0",
+                        ? "rgba(16, 83, 112, 0.15)"
+                        : "rgba(22, 194, 196, 0.15)",
+                    color: authUser.role === "admin" ? "#105370" : "#16C2C4",
                   }}
                 >
                   {authUser.role}

@@ -188,7 +188,7 @@ export const StaffAuthModal: React.FC<StaffAuthModalProps> = ({
         <div
           className="p-5 text-white relative"
           style={{
-            backgroundColor: role === "admin" ? "#6C8CBF" : "#5AA7A7",
+            backgroundColor: role === "admin" ? "#105370" : "#16C2C4",
           }}
         >
           <button
@@ -229,7 +229,7 @@ export const StaffAuthModal: React.FC<StaffAuthModalProps> = ({
                   : "text-slate-600 hover:text-slate-900"
               }`}
             >
-              <Stethoscope className="w-4 h-4" style={{ color: "#5AA7A7" }} />
+              <Stethoscope className="w-4 h-4" style={{ color: "#16C2C4" }} />
               <span>Doctor Portal</span>
             </button>
             <button
@@ -241,7 +241,7 @@ export const StaffAuthModal: React.FC<StaffAuthModalProps> = ({
                   : "text-slate-600 hover:text-slate-900"
               }`}
             >
-              <ShieldCheck className="w-4 h-4" style={{ color: "#6C8CBF" }} />
+              <ShieldCheck className="w-4 h-4" style={{ color: "#105370" }} />
               <span>Admin Dashboard</span>
             </button>
           </div>
@@ -257,7 +257,7 @@ export const StaffAuthModal: React.FC<StaffAuthModalProps> = ({
               onClick={() => handleQuickFill(role)}
               className="px-2 py-1 rounded-md font-bold text-white transition-opacity hover:opacity-90"
               style={{
-                backgroundColor: role === "admin" ? "#6C8CBF" : "#5AA7A7",
+                backgroundColor: role === "admin" ? "#105370" : "#16C2C4",
               }}
             >
               Use Preset
@@ -355,7 +355,7 @@ export const StaffAuthModal: React.FC<StaffAuthModalProps> = ({
                 disabled={isLoading}
                 className="flex-1 py-2.5 px-3 rounded-xl text-xs font-bold text-white shadow-xs flex items-center justify-center gap-1.5 transition-opacity hover:opacity-90 disabled:opacity-50"
                 style={{
-                  backgroundColor: role === "admin" ? "#6C8CBF" : "#5AA7A7",
+                  backgroundColor: role === "admin" ? "#105370" : "#16C2C4",
                 }}
               >
                 <LogIn className="w-4 h-4" />

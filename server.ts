@@ -46,6 +46,7 @@ app.get("/api/live/status", (_req, res) => {
   res.json({
     status: "active",
     model: "gemini-3.1-flash-live-preview",
+    transcribeModel: "gemini-3.5-transcribe",
     hasApiKey: Boolean(process.env.GEMINI_API_KEY),
     supportedModalities: ["AUDIO"],
     voiceName: "Zephyr",
@@ -53,7 +54,74 @@ app.get("/api/live/status", (_req, res) => {
   });
 });
 
-// Proxy all /api/* requests directly to the Python backend (except live status)
+// Audio transcription endpoint using Gemini 3.5 Transcribe
+app.post("/api/transcribe", async (req, res) => {
+  try {
+    const { audio, mimeType, language, context } = req.body;
+
+    if (!audio) {
+      return res.status(400).json({ error: "Missing base64 audio data in request body" });
+    }
+
+    if (!process.env.GEMINI_API_KEY) {
+      return res.status(500).json({
+        error: "GEMINI_API_KEY is not configured in server environment",
+      });
+    }
+
+    const ai = getGenAI();
+
+    let langHint = "English, Malayalam (മലയാളം), or Hindi (हिन्दी)";
+    if (language === "ml") langHint = "Malayalam (മലയാളം)";
+    else if (language === "hi") langHint = "Hindi (हिन्दी)";
+    else if (language === "en") langHint = "English";
+
+    const promptText =
+      `You are a high-accuracy medical audio transcriber. Transcribe this audio recording verbatim. ` +
+      `The speaker may speak in ${langHint} or code-switch between them with clinical terms. ` +
+      `Guidelines: ` +
+      `1. Provide the exact, word-for-word transcript in the native script (Malayalam for Malayalam, Devanagari for Hindi, English for English). ` +
+      `2. Also detect the dominant language. ` +
+      `3. If spoken in Malayalam or Hindi, also provide an English translation for clinical record keeping. ` +
+      `Output format: If JSON is requested or naturally return the plain verbatim text as the main transcript.`;
+
+    const response = await ai.models.generateContent({
+      model: "gemini-3.5-transcribe",
+      contents: [
+        {
+          inlineData: {
+            data: audio,
+            mimeType: mimeType || "audio/webm",
+          },
+        },
+        promptText,
+      ],
+    });
+
+    const transcriptText =
+      response.text ||
+      response.candidates?.[0]?.content?.parts?.map((p: any) => p.text).join("") ||
+      "";
+
+    console.log(`[Transcribe] Successfully transcribed audio using gemini-3.5-transcribe (${transcriptText.length} chars)`);
+
+    return res.json({
+      success: true,
+      transcript: transcriptText.trim(),
+      model: "gemini-3.5-transcribe",
+      detectedLanguage: language || "auto",
+      timestamp: new Date().toISOString(),
+    });
+  } catch (err: any) {
+    console.error("[Transcribe] Error transcribing audio with gemini-3.5-transcribe:", err);
+    return res.status(500).json({
+      success: false,
+      error: err?.message || "Failed to transcribe audio with gemini-3.5-transcribe",
+    });
+  }
+});
+
+// Proxy all other /api/* requests directly to the Python backend (except live status and transcribe)
 app.all("/api/*", async (req, res) => {
   try {
     const targetUrl = `http://127.0.0.1:${PYTHON_PORT}${req.originalUrl}`;

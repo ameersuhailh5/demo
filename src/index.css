@@ -1,17 +1,17 @@
 @import "tailwindcss";
 
 @theme {
-  --color-brand-navy: #3B5284;
-  --color-brand-teal: #5BA8A0;
-  --color-brand-lime: #CBE54E;
-  --color-brand-olive: #94B447;
-  --color-brand-forest: #5D6E1E;
+  --color-brand-navy: #105370;
+  --color-brand-teal: #16C2C4;
+  --color-brand-coral: #FF5353;
+  --color-brand-crimson: #8C2727;
+  --color-brand-ice: #ECFCF9;
 
-  --color-palette-1: #3B5284;
-  --color-palette-2: #5BA8A0;
-  --color-palette-3: #CBE54E;
-  --color-palette-4: #94B447;
-  --color-palette-5: #5D6E1E;
+  --color-palette-1: #8C2727;
+  --color-palette-2: #FF5353;
+  --color-palette-3: #ECFCF9;
+  --color-palette-4: #16C2C4;
+  --color-palette-5: #105370;
 }
 
 /* Custom Typography Families */
@@ -86,67 +86,65 @@
 }
 
 :root {
-  --color-1: #3B5284;
-  --color-2: #5BA8A0;
-  --color-3: #CBE54E;
-  --color-4: #94B447;
-  --color-5: #5D6E1E;
+  --color-1: #8C2727;
+  --color-2: #FF5353;
+  --color-3: #ECFCF9;
+  --color-4: #16C2C4;
+  --color-5: #105370;
 
-  --palette-navy: #3B5284;
-  --palette-teal: #5BA8A0;
-  --palette-lime: #CBE54E;
-  --palette-olive: #94B447;
-  --palette-forest: #5D6E1E;
+  --palette-crimson: #8C2727;
+  --palette-coral: #FF5353;
+  --palette-ice: #ECFCF9;
+  --palette-cyan: #16C2C4;
+  --palette-navy: #105370;
+
+  /* Legacy mappings so existing utility aliases continue working seamlessly */
+  --palette-teal: #16C2C4;
+  --palette-lime: #FF5353;
+  --palette-olive: #16C2C4;
+  --palette-forest: #8C2727;
 }
 
 /* Palette Hex Classes */
-.bg-palette-navy { background-color: #3B5284; }
-.text-palette-navy { color: #3B5284; }
-.border-palette-navy { border-color: #3B5284; }
+.bg-palette-navy { background-color: #105370; }
+.text-palette-navy { color: #105370; }
+.border-palette-navy { border-color: #105370; }
 
-.bg-palette-teal { background-color: #5BA8A0; }
-.text-palette-teal { color: #5BA8A0; }
-.border-palette-teal { border-color: #5BA8A0; }
+.bg-palette-teal { background-color: #16C2C4; }
+.text-palette-teal { color: #16C2C4; }
+.border-palette-teal { border-color: #16C2C4; }
 
-.bg-palette-lime { background-color: #CBE54E; }
-.text-palette-lime { color: #5D6E1E; }
-.border-palette-lime { border-color: #CBE54E; }
+.bg-palette-lime { background-color: #FF5353; }
+.text-palette-lime { color: #8C2727; }
+.border-palette-lime { border-color: #FF5353; }
 
-.bg-palette-olive { background-color: #94B447; }
-.text-palette-olive { color: #94B447; }
-.border-palette-olive { border-color: #94B447; }
+.bg-palette-olive { background-color: #16C2C4; }
+.text-palette-olive { color: #16C2C4; }
+.border-palette-olive { border-color: #16C2C4; }
 
-.bg-palette-forest { background-color: #5D6E1E; }
-.text-palette-forest { color: #5D6E1E; }
-.border-palette-forest { border-color: #5D6E1E; }
+.bg-palette-forest { background-color: #8C2727; }
+.text-palette-forest { color: #8C2727; }
+.border-palette-forest { border-color: #8C2727; }
 
-/* Palette Gradients from Reference Image (Dopely 46) */
+/* Palette Gradients from New Medical Workshop 2011 Palette */
 .bg-gradient-palette-1 {
-  background: linear-gradient(135deg, #3B5284 0%, #5BA8A0 100%);
+  background: linear-gradient(135deg, #105370 0%, #16C2C4 100%);
 }
 
 .bg-gradient-palette-2 {
-  background: linear-gradient(135deg, #5BA8A0 0%, #CBE54E 100%);
+  background: linear-gradient(135deg, #16C2C4 0%, #FF5353 100%);
 }
 
 .bg-gradient-palette-3 {
-  background: linear-gradient(135deg, #CBE54E 0%, #94B447 100%);
-}
-
-.bg-gradient-palette-4 {
-  background: linear-gradient(135deg, #94B447 0%, #5D6E1E 100%);
-}
-
-.bg-gradient-palette-5 {
-  background: linear-gradient(135deg, #5D6E1E 0%, #5BA8A0 100%);
+  background: linear-gradient(135deg, #FF5353 0%, #8C2727 100%);
 }
 
 .bg-gradient-hero {
-  background: linear-gradient(135deg, #3B5284 0%, #5BA8A0 60%, #94B447 100%);
+  background: linear-gradient(135deg, #105370 0%, #16C2C4 55%, #8C2727 100%);
 }
 
 .bg-gradient-banner {
-  background: linear-gradient(135deg, #3B5284 0%, #5D6E1E 100%);
+  background: linear-gradient(135deg, #105370 0%, #8C2727 100%);
 }
 
 /* Smooth transitions */

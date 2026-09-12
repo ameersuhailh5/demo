@@ -31,6 +31,7 @@ import { StaffAuthModal } from "./components/StaffAuthModal";
 import { LanguageSelectionModal } from "./components/LanguageSelectionModal";
 import { FloatingLanguageSwitcher } from "./components/FloatingLanguageSwitcher";
 import { LiveVoiceModal } from "./components/LiveVoiceModal";
+import { AudioTranscribeModal } from "./components/AudioTranscribeModal";
 import { playClinicChime, playSuccessChime } from "./utils/audio";
 import { Lock, ShieldAlert } from "lucide-react";
 
@@ -72,6 +73,7 @@ export default function App() {
 
   const [fontSizeLarge, setFontSizeLarge] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [isLanguageHidden, setIsLanguageHidden] = useState(false);
 
   // Application State: Doctors, Patients, Appointments, Queue, Logs
   const [doctors, setDoctors] = useState<Doctor[]>(INITIAL_DOCTORS);
@@ -93,6 +95,7 @@ export default function App() {
   const [showUpdateRecordsModal, setShowUpdateRecordsModal] = useState(false);
   const [showLanguageModal, setShowLanguageModal] = useState(false);
   const [showLiveVoiceModal, setShowLiveVoiceModal] = useState(false);
+  const [showTranscribeModal, setShowTranscribeModal] = useState(false);
 
   // Auto-calculated statistics
   const activeWaitingCount = queue.filter(
@@ -485,6 +488,7 @@ export default function App() {
         onSignOut={handleSignOut}
         onOpenLanguageModal={() => setShowLanguageModal(true)}
         onOpenLiveVoice={() => setShowLiveVoiceModal(true)}
+        onOpenTranscribe={() => setShowTranscribeModal(true)}
       />
 
       {/* Main Viewport Container */}
@@ -495,10 +499,10 @@ export default function App() {
             {kioskSubView === "home" && (
               <KioskHome
                 language={language}
-                onSelectLanguage={(l) => setLanguage(l)}
                 onStartWalkIn={() => setKioskSubView("walkin")}
                 onViewQueue={() => setCurrentMode("tv-display")}
                 onUpdateRecords={() => setShowUpdateRecordsModal(true)}
+                onOpenTranscribe={() => setShowTranscribeModal(true)}
                 waitingCount={activeWaitingCount}
                 averageWaitMinutes={averageWaitMinutes}
               />
@@ -739,11 +743,28 @@ export default function App() {
         }}
       />
 
+      {/* Gemini 3.5 Audio Transcribe Modal (Audio-to-Text STT) */}
+      <AudioTranscribeModal
+        isOpen={showTranscribeModal}
+        onClose={() => setShowTranscribeModal(false)}
+        language={language}
+        targetFieldLabel="Walk-In Registration / Clinical Note"
+        onApplyTranscript={(transcriptText) => {
+          // Open walkin registration and populate or log
+          setCurrentMode("kiosk");
+          setKioskSubView("walkin");
+          setShowTranscribeModal(false);
+          playSuccessChime();
+        }}
+      />
+
       {/* Persistent Floating Quick Language Switcher (Bottom-Right) */}
       <FloatingLanguageSwitcher
         currentLanguage={language}
         onSelectLanguage={setLanguage}
         soundEnabled={soundEnabled}
+        isLanguageHidden={isLanguageHidden}
+        onToggleLanguageHidden={() => setIsLanguageHidden((prev) => !prev)}
       />
     </div>
   );

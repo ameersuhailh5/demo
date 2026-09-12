@@ -207,7 +207,7 @@ export const DoctorPortal: React.FC<DoctorPortalProps> = ({
                 : "bg-slate-100 text-slate-600 hover:text-slate-900"
             }`}
             style={{
-              backgroundColor: activeTab === "my-patients" ? "#5AA7A7" : undefined,
+              backgroundColor: activeTab === "my-patients" ? "#16C2C4" : undefined,
             }}
           >
             <Users className="w-3.5 h-3.5" />
@@ -222,7 +222,7 @@ export const DoctorPortal: React.FC<DoctorPortalProps> = ({
                 : "bg-slate-100 text-slate-600 hover:text-slate-900"
             }`}
             style={{
-              backgroundColor: activeTab === "clinic-allocation" ? "#5AA7A7" : undefined,
+              backgroundColor: activeTab === "clinic-allocation" ? "#16C2C4" : undefined,
             }}
           >
             <Building2 className="w-3.5 h-3.5" />
@@ -311,7 +311,7 @@ export const DoctorPortal: React.FC<DoctorPortalProps> = ({
                         <div className="flex items-center gap-2">
                           <span
                             className="font-mono font-bold text-lg"
-                            style={{ color: "#5AA7A7" }}
+                            style={{ color: "#16C2C4" }}
                           >
                             {item.ticketNumber}
                           </span>
@@ -421,11 +421,11 @@ export const DoctorPortal: React.FC<DoctorPortalProps> = ({
                       <div
                         className="p-2.5 rounded-xl border text-xs space-y-1"
                         style={{
-                          backgroundColor: "rgba(90, 167, 167, 0.05)",
-                          borderColor: "#96D7C6",
+                          backgroundColor: "#ECFCF9",
+                          borderColor: "#16C2C4",
                         }}
                       >
-                        <div className="flex items-center gap-1 font-bold text-[11px]" style={{ color: "#5AA7A7" }}>
+                        <div className="flex items-center gap-1 font-bold text-[11px]" style={{ color: "#105370" }}>
                           <Sparkles className="w-3.5 h-3.5" />
                           <span>AI Triage Assessment:</span>
                         </div>
@@ -452,7 +452,7 @@ export const DoctorPortal: React.FC<DoctorPortalProps> = ({
                       <button
                         onClick={() => onOpenEHR(item.mrn, item)}
                         className="inline-flex items-center gap-1 font-semibold px-2.5 py-1.5 rounded-xl text-xs transition-colors"
-                        style={{ backgroundColor: "#f0fdf9", color: "#5AA7A7" }}
+                        style={{ backgroundColor: "#ECFCF9", color: "#105370" }}
                       >
                         <FileText className="w-3.5 h-3.5" />
                         <span>Full Patient Data</span>
@@ -463,7 +463,7 @@ export const DoctorPortal: React.FC<DoctorPortalProps> = ({
                           <button
                             onClick={() => onCallPatient(item.id)}
                             className="text-white font-bold px-3 py-1.5 rounded-xl text-xs flex items-center gap-1 shadow-xs transition-colors"
-                            style={{ backgroundColor: "#5AA7A7" }}
+                            style={{ backgroundColor: "#16C2C4" }}
                           >
                             <PhoneCall className="w-3.5 h-3.5" />
                             <span>Call to Room</span>
@@ -474,7 +474,7 @@ export const DoctorPortal: React.FC<DoctorPortalProps> = ({
                           <button
                             onClick={() => handleStartConsultation(item)}
                             className="text-slate-900 font-bold px-3 py-1.5 rounded-xl text-xs flex items-center gap-1 shadow-xs transition-colors"
-                            style={{ backgroundColor: "#96D7C6" }}
+                            style={{ backgroundColor: "#16C2C4" }}
                           >
                             <UserCheck className="w-3.5 h-3.5" />
                             <span>Start Consultation</span>
@@ -495,7 +495,7 @@ export const DoctorPortal: React.FC<DoctorPortalProps> = ({
                             <button
                               onClick={() => handleCompleteVisit(item)}
                               className="text-white font-bold px-3 py-1.5 rounded-xl text-xs flex items-center gap-1 shadow-xs transition-colors"
-                              style={{ backgroundColor: "#BAC94A" }}
+                              style={{ backgroundColor: "#FF5353" }}
                             >
                               <Check className="w-3.5 h-3.5" />
                               <span>Complete Visit</span>
@@ -721,7 +721,7 @@ export const DoctorPortal: React.FC<DoctorPortalProps> = ({
                   type="button"
                   onClick={handleSaveNotes}
                   className="text-white font-bold px-4 py-2 rounded-xl shadow-xs"
-                  style={{ backgroundColor: "#5AA7A7" }}
+                  style={{ backgroundColor: "#16C2C4" }}
                 >
                   Save Notes to Record
                 </button>

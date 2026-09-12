@@ -65,7 +65,7 @@ export const LanguageSelectionModal: React.FC<LanguageSelectionModalProps> = ({
         <div
           className="p-6 text-white text-center relative"
           style={{
-            background: "linear-gradient(135deg, #4f9696 0%, #5AA7A7 50%, #6C8CBF 100%)",
+            background: "linear-gradient(135deg, #105370 0%, #16C2C4 50%, #FF5353 100%)",
           }}
         >
           <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center mx-auto mb-3 shadow-inner">
@@ -88,7 +88,7 @@ export const LanguageSelectionModal: React.FC<LanguageSelectionModalProps> = ({
                 onClick={() => handleSelect(lang.id)}
                 className={`w-full text-left p-4 rounded-2xl border-2 transition-all flex items-center justify-between cursor-pointer group transform hover:-translate-y-0.5 active:translate-y-0 ${
                   isSelected
-                    ? "bg-white border-teal-600 shadow-md ring-2 ring-teal-500/20"
+                    ? "bg-white border-[#16C2C4] shadow-md ring-2 ring-[#16C2C4]/20"
                     : "bg-white border-slate-200 hover:border-teal-300 shadow-xs"
                 }`}
               >
@@ -100,7 +100,7 @@ export const LanguageSelectionModal: React.FC<LanguageSelectionModalProps> = ({
                         : "bg-slate-100 text-slate-700 group-hover:bg-teal-50 group-hover:text-teal-700"
                     }`}
                     style={{
-                      backgroundColor: isSelected ? "#5AA7A7" : undefined,
+                      backgroundColor: isSelected ? "#16C2C4" : undefined,
                     }}
                   >
                     {lang.id.toUpperCase()}
@@ -127,8 +127,8 @@ export const LanguageSelectionModal: React.FC<LanguageSelectionModalProps> = ({
                       <span
                         className="text-[10px] font-bold px-2 py-0.5 rounded-full"
                         style={{
-                          backgroundColor: isSelected ? "rgba(90, 167, 167, 0.15)" : "#f1f5f9",
-                          color: isSelected ? "#5AA7A7" : "#64748b",
+                          backgroundColor: isSelected ? "rgba(22, 194, 196, 0.15)" : "#f1f5f9",
+                          color: isSelected ? "#105370" : "#64748b",
                         }}
                       >
                         {lang.badge}

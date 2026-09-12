@@ -17,8 +17,12 @@ import {
   Leaf,
   Pill,
   Stethoscope,
+  Mic,
+  Square,
+  Volume2,
 } from "lucide-react";
 import { playSuccessChime, playButtonTap } from "../utils/audio";
+import { AudioTranscribeModal } from "./AudioTranscribeModal";
 
 interface WalkInRegistrationProps {
   onComplete: (ticket: QueueItem, patientRecord?: PatientRecord) => void;
@@ -51,6 +55,87 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
   const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
   const [painLevel, setPainLevel] = useState<number>(3);
   const [duration, setDuration] = useState("Past 24 hours");
+
+  // Audio Transcribe with gemini-3.5-transcribe
+  const [showTranscribeModal, setShowTranscribeModal] = useState(false);
+  const [isInlineRecording, setIsInlineRecording] = useState(false);
+  const [isInlineTranscribing, setIsInlineTranscribing] = useState(false);
+  const inlineRecorderRef = useRef<MediaRecorder | null>(null);
+  const inlineChunksRef = useRef<Blob[]>([]);
+
+  const handleStartInlineRecord = async () => {
+    try {
+      inlineChunksRef.current = [];
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      let mimeType = "audio/webm";
+      if (MediaRecorder.isTypeSupported("audio/webm;codecs=opus")) {
+        mimeType = "audio/webm;codecs=opus";
+      } else if (MediaRecorder.isTypeSupported("audio/mp4")) {
+        mimeType = "audio/mp4";
+      }
+      const recorder = new MediaRecorder(stream, { mimeType });
+      inlineRecorderRef.current = recorder;
+
+      recorder.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) {
+          inlineChunksRef.current.push(e.data);
+        }
+      };
+
+      recorder.onstop = async () => {
+        stream.getTracks().forEach((track) => track.stop());
+        const blob = new Blob(inlineChunksRef.current, { type: mimeType });
+        setIsInlineRecording(false);
+        setIsInlineTranscribing(true);
+
+        try {
+          const reader = new FileReader();
+          const base64Promise = new Promise<string>((resolve) => {
+            reader.onloadend = () => {
+              const res = reader.result as string;
+              resolve(res.split(",")[1]);
+            };
+          });
+          reader.readAsDataURL(blob);
+          const base64Audio = await base64Promise;
+
+          const response = await fetch("/api/transcribe", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              audio: base64Audio,
+              mimeType: blob.type || "audio/webm",
+              language: language,
+            }),
+          });
+
+          const data = await response.json();
+          if (data.success && data.transcript) {
+            setChiefComplaint((prev) =>
+              prev ? `${prev}. ${data.transcript}` : data.transcript
+            );
+            playSuccessChime();
+          }
+        } catch (err) {
+          console.error("Inline transcription error:", err);
+        } finally {
+          setIsInlineTranscribing(false);
+        }
+      };
+
+      recorder.start(250);
+      setIsInlineRecording(true);
+    } catch (err) {
+      console.error("Mic access failed:", err);
+      setShowTranscribeModal(true); // fallback to full modal
+    }
+  };
+
+  const handleStopInlineRecord = () => {
+    if (inlineRecorderRef.current && inlineRecorderRef.current.state !== "inactive") {
+      inlineRecorderRef.current.stop();
+    }
+  };
 
   // Step 3: Medical History
   const [allergiesText, setAllergiesText] = useState("");
@@ -317,12 +402,12 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
           onClick={handlePrefillDemo}
           className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg border transition-colors cursor-pointer"
           style={{
-            backgroundColor: "rgba(91, 168, 160, 0.1)",
-            color: "#3B5284",
-            borderColor: "#5BA8A0",
+            backgroundColor: "#ECFCF9",
+            color: "#105370",
+            borderColor: "#16C2C4",
           }}
         >
-          <Sparkles className="w-3.5 h-3.5" style={{ color: "#5BA8A0" }} />
+          <Sparkles className="w-3.5 h-3.5" style={{ color: "#16C2C4" }} />
           <span>Auto-Fill Sample</span>
         </button>
       </div>
@@ -337,12 +422,12 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
                 style={{
                   backgroundColor:
                     currentStep === s.num
-                      ? "#3B5284"
+                      ? "#105370"
                       : currentStep > s.num
-                      ? "#94B447"
+                      ? "#FF5353"
                       : "#cbd5e1",
                   color: currentStep > s.num && currentStep !== s.num ? "#ffffff" : "#ffffff",
-                  boxShadow: currentStep === s.num ? "0 0 0 4px rgba(91, 168, 160, 0.3)" : undefined,
+                  boxShadow: currentStep === s.num ? "0 0 0 4px rgba(22, 194, 196, 0.3)" : undefined,
                 }}
               >
                 {currentStep > s.num ? "✓" : s.num}
@@ -358,7 +443,7 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
             className="h-full transition-all duration-300"
             style={{
               width: `${((currentStep - 1) / 5) * 100}%`,
-              background: "linear-gradient(90deg, #3B5284 0%, #5BA8A0 50%, #94B447 100%)",
+              background: "linear-gradient(90deg, #105370 0%, #16C2C4 50%, #FF5353 100%)",
             }}
           ></div>
         </div>
@@ -470,7 +555,7 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
                 }}
                 disabled={!firstName.trim() || !lastName.trim()}
                 className="text-white font-bold py-2.5 px-5 rounded-xl flex items-center gap-2 text-xs shadow-xs disabled:opacity-50"
-                style={{ backgroundColor: "#5AA7A7" }}
+                style={{ backgroundColor: "#16C2C4" }}
               >
                 <span>{t.common.continue}</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -504,7 +589,7 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
                   }}
                   className={`text-left p-3.5 rounded-xl border-2 transition-all relative cursor-pointer ${
                     treatmentType === "allopathy"
-                      ? "border-[#5BA8A0] bg-[#5BA8A0]/10 shadow-xs"
+                      ? "border-[#16C2C4] bg-[#ECFCF9] shadow-xs"
                       : "border-slate-200 hover:border-slate-300 bg-white"
                   }`}
                 >
@@ -512,19 +597,19 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
                     <div className="flex items-center gap-2.5">
                       <div
                         className="w-8 h-8 rounded-lg flex items-center justify-center text-white"
-                        style={{ backgroundColor: "#3B5284" }}
+                        style={{ backgroundColor: "#105370" }}
                       >
                         <Pill className="w-4 h-4" />
                       </div>
                       <div>
                         <h4 className="font-bold text-slate-900 text-xs">{t.common.allopathy}</h4>
-                        <span className="text-[10px] font-semibold block" style={{ color: "#3B5284" }}>
+                        <span className="text-[10px] font-semibold block" style={{ color: "#105370" }}>
                           Conventional Western Medicine
                         </span>
                       </div>
                     </div>
                     {treatmentType === "allopathy" && (
-                      <CheckCircle2 className="w-4 h-4" style={{ color: "#5BA8A0" }} />
+                      <CheckCircle2 className="w-4 h-4" style={{ color: "#16C2C4" }} />
                     )}
                   </div>
                   <p className="text-[11px] text-slate-600 leading-relaxed">
@@ -545,24 +630,24 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
                   }}
                   className={`text-left p-3.5 rounded-xl border-2 transition-all relative cursor-pointer ${
                     treatmentType === "ayurveda"
-                      ? "border-[#94B447] bg-[#94B447]/10 shadow-xs"
+                      ? "border-[#FF5353] bg-[#FF5353]/10 shadow-xs"
                       : "border-slate-200 hover:border-slate-300 bg-white"
                   }`}
                 >
                   <div className="flex items-start justify-between mb-1.5">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white" style={{ backgroundColor: "#5D6E1E" }}>
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white" style={{ backgroundColor: "#8C2727" }}>
                         <Leaf className="w-4 h-4" />
                       </div>
                       <div>
                         <h4 className="font-bold text-slate-900 text-xs">{t.common.ayurveda}</h4>
-                        <span className="text-[10px] font-semibold block" style={{ color: "#5D6E1E" }}>
+                        <span className="text-[10px] font-semibold block" style={{ color: "#8C2727" }}>
                           Traditional Holistic Medicine
                         </span>
                       </div>
                     </div>
                     {treatmentType === "ayurveda" && (
-                      <CheckCircle2 className="w-4 h-4" style={{ color: "#94B447" }} />
+                      <CheckCircle2 className="w-4 h-4" style={{ color: "#FF5353" }} />
                     )}
                   </div>
                   <p className="text-[11px] text-slate-600 leading-relaxed">
@@ -574,9 +659,61 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
 
             {/* Chief Complaint */}
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
-                {t.walkin.chiefComplaint} *
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs font-bold text-slate-700">
+                  {t.walkin.chiefComplaint} *
+                </label>
+                
+                <div className="flex items-center gap-1.5">
+                  {isInlineRecording ? (
+                    <button
+                      type="button"
+                      id="btn-stop-inline-recording"
+                      onClick={handleStopInlineRecord}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-[11px] font-bold shadow-xs cursor-pointer animate-pulse"
+                    >
+                      <Square className="w-3 h-3 fill-white" />
+                      <span>Stop & Transcribe</span>
+                    </button>
+                  ) : isInlineTranscribing ? (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 text-[11px] font-medium border border-slate-200">
+                      <Sparkles className="w-3 h-3 text-[#5BA8A0] animate-spin" />
+                      <span>Transcribing (3.5)...</span>
+                    </span>
+                  ) : (
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        id="btn-inline-mic-record"
+                        onClick={handleStartInlineRecord}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-slate-900 text-[11px] font-bold shadow-2xs border cursor-pointer hover:opacity-90 active:scale-95 transition-all"
+                        style={{
+                          backgroundColor: "#FF5353",
+                          borderColor: "#8C2727",
+                        }}
+                        title="Speak to Transcribe with Gemini 3.5 Transcribe"
+                      >
+                        <Mic className="w-3.5 h-3.5 text-slate-950" />
+                        <span>Voice Mic</span>
+                        <span className="text-[9px] bg-slate-900 text-white px-1 py-0.2 rounded font-mono">
+                          3.5 STT
+                        </span>
+                      </button>
+
+                      <button
+                        type="button"
+                        id="btn-open-full-audio-transcribe-modal"
+                        onClick={() => setShowTranscribeModal(true)}
+                        className="p-1 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 border border-slate-200 transition-colors cursor-pointer"
+                        title="Open Advanced Voice Transcriber Studio"
+                      >
+                        <Sparkles className="w-3.5 h-3.5" style={{ color: "#105370" }} />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
               <textarea
                 id="textarea-chief-complaint"
                 rows={2}
@@ -585,6 +722,12 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
                 placeholder={t.walkin.chiefComplaintPlaceholder}
                 className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs focus:outline-none focus:bg-white"
               />
+              {isInlineRecording && (
+                <p className="text-[11px] text-rose-600 font-medium mt-1 flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span>
+                  Listening to microphone... Speak clearly in English, Malayalam, or Hindi.
+                </p>
+              )}
             </div>
 
             {/* Common Symptoms */}
@@ -955,9 +1098,9 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
                 onClick={performAITriage}
                 disabled={!hasSignature}
                 className="text-white font-bold py-2.5 px-5 rounded-xl flex items-center gap-2 text-xs shadow-xs disabled:opacity-50 cursor-pointer"
-                style={{ backgroundColor: "#3B5284" }}
+                style={{ backgroundColor: "#105370" }}
               >
-                <Sparkles className="w-3.5 h-3.5" style={{ color: "#CBE54E" }} />
+                <Sparkles className="w-3.5 h-3.5" style={{ color: "#FF5353" }} />
                 <span>{t.common.submit}</span>
               </button>
             </div>
@@ -971,7 +1114,7 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
               <div className="text-center py-10 space-y-3">
                 <div
                   className="w-12 h-12 rounded-full border-4 border-t-transparent animate-spin mx-auto"
-                  style={{ borderColor: "#5AA7A7", borderTopColor: "transparent" }}
+                  style={{ borderColor: "#16C2C4", borderTopColor: "transparent" }}
                 ></div>
                 <h3 className="text-base font-bold text-slate-900">
                   {t.walkin.analyzingTriage}
@@ -987,7 +1130,7 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
                     <div className="flex items-center gap-2 mb-1">
                       <span
                         className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                        style={{ backgroundColor: "#f0fdf4", color: "#166534" }}
+                        style={{ backgroundColor: "#ECFCF9", color: "#105370" }}
                       >
                         {t.walkin.triageCompleted}
                       </span>
@@ -1009,13 +1152,13 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
                           ? "#fef2f2"
                           : triageResult.triageScore === 3
                           ? "#fefce8"
-                          : "#f0fdfa",
+                          : "#ECFCF9",
                       borderColor:
                         triageResult.triageScore <= 2
                           ? "#fca5a5"
                           : triageResult.triageScore === 3
                           ? "#E2D36B"
-                          : "#96D7C6",
+                          : "#16C2C4",
                     }}
                   >
                     <div className="flex items-center justify-between mb-1.5">
@@ -1026,16 +1169,16 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
                         <span
                           className="text-[10px] font-bold px-2 py-0.5 rounded-full border"
                           style={{
-                            backgroundColor: treatmentType === "ayurveda" ? "#ecfdf5" : "#f0fdf9",
-                            color: treatmentType === "ayurveda" ? "#047857" : "#0f766e",
-                            borderColor: treatmentType === "ayurveda" ? "#a7f3d0" : "#99f6e4",
+                            backgroundColor: treatmentType === "ayurveda" ? "#fff5f5" : "#ECFCF9",
+                            color: treatmentType === "ayurveda" ? "#8C2727" : "#105370",
+                            borderColor: treatmentType === "ayurveda" ? "#FF5353" : "#16C2C4",
                           }}
                         >
                           {treatmentType === "ayurveda" ? "🌿 " + t.common.ayurveda : "💊 " + t.common.allopathy}
                         </span>
                         <span
                           className="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-white"
-                          style={{ color: "#5AA7A7" }}
+                          style={{ color: "#16C2C4" }}
                         >
                           ESI {triageResult.triageScore}
                         </span>
@@ -1065,9 +1208,9 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
                     id="btn-walkin-issue-ticket"
                     onClick={handleFinalSubmit}
                     className="w-full text-white font-bold py-3.5 px-6 rounded-xl shadow-md text-base flex items-center justify-center gap-2 transition-all cursor-pointer hover:opacity-95 active:scale-98"
-                    style={{ background: "linear-gradient(135deg, #3B5284 0%, #5BA8A0 100%)" }}
+                    style={{ background: "linear-gradient(135deg, #105370 0%, #16C2C4 100%)" }}
                   >
-                    <CheckCircle2 className="w-5 h-5" style={{ color: "#CBE54E" }} />
+                    <CheckCircle2 className="w-5 h-5" style={{ color: "#FF5353" }} />
                     <span>{t.ticketPass.printPass}</span>
                   </button>
                 </div>
@@ -1076,6 +1219,20 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
           </div>
         )}
       </div>
+
+      {/* Advanced Audio Transcribe Studio Modal */}
+      <AudioTranscribeModal
+        isOpen={showTranscribeModal}
+        onClose={() => setShowTranscribeModal(false)}
+        language={language}
+        targetFieldLabel="Chief Complaint"
+        onApplyTranscript={(transcriptText) => {
+          setChiefComplaint((prev) =>
+            prev ? `${prev}. ${transcriptText}` : transcriptText
+          );
+          playSuccessChime();
+        }}
+      />
     </div>
   );
 };
