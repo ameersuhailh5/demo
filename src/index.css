@@ -8,6 +8,56 @@
   --color-brand-blue: #6C8CBF;
 }
 
+/* Custom Typography Families */
+@layer base {
+  /* English Font: Roman Serif */
+  .font-roman-serif,
+  .font-en-serif {
+    font-family: 'Playfair Display', 'Cinzel', 'Noto Serif', 'Times New Roman', serif;
+  }
+
+  /* Malayalam Font: Gayathri */
+  .font-gayathri,
+  .font-ml-serif {
+    font-family: 'Gayathri', 'Manjari', 'AnjaliOldLipi', sans-serif, serif;
+  }
+
+  /* Hindi Font: Inknut Antiqua (इंक नट) */
+  .font-inknut,
+  .font-hi-serif {
+    font-family: 'Inknut Antiqua', 'Rozha One', 'Yatra One', 'Noto Serif Devanagari', serif;
+  }
+
+  /* Dynamic Language Root Styles */
+  [data-lang="en"] {
+    font-family: 'Playfair Display', 'Cinzel', 'Noto Serif', 'Times New Roman', serif;
+  }
+
+  [data-lang="ml"] {
+    font-family: 'Gayathri', sans-serif;
+  }
+
+  [data-lang="hi"] {
+    font-family: 'Inknut Antiqua', 'Noto Serif Devanagari', serif;
+  }
+
+  /* Headings with high-contrast script styling */
+  [data-lang="en"] h1, [data-lang="en"] h2, [data-lang="en"] h3, [data-lang="en"] .font-brand-heading {
+    font-family: 'Playfair Display', 'Cinzel', serif;
+    letter-spacing: -0.01em;
+  }
+
+  [data-lang="ml"] h1, [data-lang="ml"] h2, [data-lang="ml"] h3, [data-lang="ml"] .font-brand-heading {
+    font-family: 'Gayathri', sans-serif;
+    font-weight: 700;
+  }
+
+  [data-lang="hi"] h1, [data-lang="hi"] h2, [data-lang="hi"] h3, [data-lang="hi"] .font-brand-heading {
+    font-family: 'Inknut Antiqua', serif;
+    font-weight: 700;
+  }
+}
+
 :root {
   --palette-teal: #5AA7A7;
   --palette-mint: #96D7C6;

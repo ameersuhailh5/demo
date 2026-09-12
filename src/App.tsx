@@ -432,9 +432,22 @@ export default function App() {
     );
   };
 
+  const getLanguageFontClass = () => {
+    switch (language) {
+      case "ml":
+        return "font-gayathri";
+      case "hi":
+        return "font-inknut";
+      case "en":
+      default:
+        return "font-roman-serif";
+    }
+  };
+
   return (
     <div
-      className={`min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans transition-all ${
+      data-lang={language}
+      className={`min-h-screen bg-slate-50 text-slate-900 flex flex-col ${getLanguageFontClass()} transition-all ${
         fontSizeLarge ? "text-lg [&_h1]:text-4xl [&_h2]:text-3xl" : "text-sm"
       }`}
     >

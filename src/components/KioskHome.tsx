@@ -96,7 +96,15 @@ export const KioskHome: React.FC<KioskHomeProps> = ({
               >
                 <div>
                   <div className="flex items-center gap-1.5">
-                    <span className="text-base font-black text-slate-900">
+                    <span
+                      className={`text-base font-black text-slate-900 ${
+                        opt.id === "en"
+                          ? "font-roman-serif"
+                          : opt.id === "ml"
+                          ? "font-gayathri"
+                          : "font-inknut"
+                      }`}
+                    >
                       {opt.nativeName}
                     </span>
                     {opt.nativeName !== opt.name && (

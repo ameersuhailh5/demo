@@ -131,9 +131,9 @@ export const Header: React.FC<HeaderProps> = ({
               aria-label="Select Language"
               className="bg-transparent text-slate-200 text-xs focus:outline-none cursor-pointer font-medium"
             >
-              <option value="en" className="bg-slate-900 text-white">English</option>
-              <option value="ml" className="bg-slate-900 text-white">മലയാളം (Malayalam)</option>
-              <option value="hi" className="bg-slate-900 text-white">हिन्दी (Hindi)</option>
+              <option value="en" className="bg-slate-900 text-white font-roman-serif">English (Roman Serif)</option>
+              <option value="ml" className="bg-slate-900 text-white font-gayathri">മലയാളം (Gayathri)</option>
+              <option value="hi" className="bg-slate-900 text-white font-inknut">हिन्दी (Inknut / इंक नट)</option>
             </select>
           </div>
 

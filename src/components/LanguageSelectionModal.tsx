@@ -108,7 +108,15 @@ export const LanguageSelectionModal: React.FC<LanguageSelectionModalProps> = ({
 
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="text-lg font-black text-slate-900 tracking-tight">
+                      <span
+                        className={`text-lg font-black text-slate-900 tracking-tight ${
+                          lang.id === "en"
+                            ? "font-roman-serif"
+                            : lang.id === "ml"
+                            ? "font-gayathri"
+                            : "font-inknut"
+                        }`}
+                      >
                         {lang.nativeName}
                       </span>
                       {lang.nativeName !== lang.name && (
@@ -126,8 +134,26 @@ export const LanguageSelectionModal: React.FC<LanguageSelectionModalProps> = ({
                         {lang.badge}
                       </span>
                     </div>
-                    <p className="text-xs text-slate-600 mt-0.5">{lang.description}</p>
-                    <p className="text-[11px] text-teal-700 font-medium italic mt-1">
+                    <p
+                      className={`text-xs text-slate-600 mt-0.5 ${
+                        lang.id === "en"
+                          ? "font-roman-serif"
+                          : lang.id === "ml"
+                          ? "font-gayathri"
+                          : "font-inknut"
+                      }`}
+                    >
+                      {lang.description}
+                    </p>
+                    <p
+                      className={`text-[11px] text-teal-700 font-medium italic mt-1 ${
+                        lang.id === "en"
+                          ? "font-roman-serif"
+                          : lang.id === "ml"
+                          ? "font-gayathri"
+                          : "font-inknut"
+                      }`}
+                    >
                       "{lang.welcomeSnippet}"
                     </p>
                   </div>
