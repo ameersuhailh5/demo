@@ -1,10 +1,8 @@
 import React from "react";
 import { QueueItem } from "../types";
 import {
-  Tv,
   Bell,
   Clock,
-  Building2,
   Volume2,
   HeartPulse,
   Info,
@@ -23,86 +21,116 @@ export const WaitingRoomDisplay: React.FC<WaitingRoomDisplayProps> = ({
   const inConsultItems = queue.filter((q) => q.status === "in_consultation");
 
   return (
-    <div className="min-h-[calc(100vh-140px)] bg-slate-950 text-white p-4 sm:p-8 flex flex-col justify-between">
-      {/* Top TV Screen Header */}
+    <div className="min-h-[calc(100vh-140px)] bg-slate-950 text-white p-4 sm:p-7 flex flex-col justify-between">
+      {/* Header */}
       <div>
-        <div className="flex flex-wrap items-center justify-between border-b border-slate-800 pb-5 mb-8">
+        <div className="flex flex-wrap items-center justify-between border-b border-slate-800 pb-4 mb-6">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-sky-500/20 border border-sky-400/30 flex items-center justify-center text-sky-400">
-              <HeartPulse className="w-7 h-7" />
+            <div
+              className="w-10 h-10 rounded-xl flex items-center justify-center border"
+              style={{
+                backgroundColor: "rgba(90, 167, 167, 0.15)",
+                borderColor: "#5AA7A7",
+                color: "#5AA7A7",
+              }}
+            >
+              <HeartPulse className="w-6 h-6" />
             </div>
             <div>
-              <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
-                MetroHealth Clinic Waiting Room
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
+                Waiting Room Calling Board
               </h1>
-              <p className="text-xs sm:text-sm text-slate-400">
-                Live Patient Calling Board • Please watch for your ticket number
+              <p className="text-xs text-slate-400">
+                Watch for your ticket number.
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-4 text-xs sm:text-sm text-slate-400 mt-3 sm:mt-0">
+          <div className="flex items-center gap-3 text-xs text-slate-400 mt-2 sm:mt-0">
             <button
               onClick={() => playClinicChime()}
-              className="flex items-center gap-2 bg-slate-900 border border-slate-700 hover:border-sky-500 px-3 py-1.5 rounded-xl text-slate-300 transition-colors"
+              className="flex items-center gap-1.5 bg-slate-900 border border-slate-700 px-2.5 py-1 rounded-lg text-slate-300 transition-colors"
             >
-              <Volume2 className="w-4 h-4 text-sky-400" />
-              <span>Test Chime</span>
+              <Volume2 className="w-3.5 h-3.5" style={{ color: "#5AA7A7" }} />
+              <span>Chime</span>
             </button>
-            <div className="flex items-center gap-2 bg-emerald-950/60 border border-emerald-500/40 text-emerald-400 px-3 py-1.5 rounded-xl font-mono font-bold">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+            <div
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-mono font-bold text-xs border"
+              style={{
+                backgroundColor: "rgba(186, 201, 74, 0.15)",
+                borderColor: "#BAC94A",
+                color: "#BAC94A",
+              }}
+            >
+              <span
+                className="w-2 h-2 rounded-full animate-ping"
+                style={{ backgroundColor: "#BAC94A" }}
+              ></span>
               <span>LIVE QUEUE</span>
             </div>
           </div>
         </div>
 
-        {/* Main Grid: Now Calling on Left, Next Up on Right */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* NOW CALLING / NOW SERVING (Col 7) */}
-          <div className="lg:col-span-7 space-y-6">
-            <div className="flex items-center gap-2 text-amber-400 text-sm font-bold uppercase tracking-widest">
-              <Bell className="w-4 h-4 animate-bounce" />
-              <span>Now Calling (Proceed to Assigned Room)</span>
+        {/* Main Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* NOW CALLING */}
+          <div className="lg:col-span-7 space-y-4">
+            <div
+              className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider"
+              style={{ color: "#E2D36B" }}
+            >
+              <Bell className="w-3.5 h-3.5 animate-bounce" />
+              <span>Now Calling</span>
             </div>
 
             {calledItems.length === 0 ? (
-              <div className="bg-slate-900/60 border-2 border-dashed border-slate-800 rounded-3xl p-12 text-center">
-                <Clock className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-                <h3 className="text-xl font-bold text-slate-400">
-                  All Called Patients Currently Roomed
+              <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-8 text-center">
+                <Clock className="w-8 h-8 text-slate-600 mx-auto mb-2" />
+                <h3 className="text-base font-bold text-slate-400">
+                  No Tickets Active
                 </h3>
-                <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
-                  Physicians are completing active consultations. Next ticket will appear here momentarily with a chime alert.
+                <p className="text-xs text-slate-500 mt-1">
+                  Called tickets appear here with chime notification.
                 </p>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {calledItems.map((item) => (
                   <div
                     key={item.id}
-                    className="relative bg-gradient-to-r from-amber-500/20 via-sky-500/20 to-teal-500/20 border-2 border-amber-400/80 rounded-3xl p-6 sm:p-8 shadow-2xl shadow-amber-500/10 animate-pulse"
+                    className="border-2 rounded-2xl p-5 sm:p-6 animate-pulse"
+                    style={{
+                      backgroundColor: "rgba(226, 211, 107, 0.1)",
+                      borderColor: "#E2D36B",
+                    }}
                   >
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                       <div>
-                        <span className="text-xs font-bold uppercase tracking-wider text-amber-300 block mb-1">
-                          Ticket Called Just Now:
+                        <span
+                          className="text-[11px] font-bold uppercase tracking-wider block mb-0.5"
+                          style={{ color: "#E2D36B" }}
+                        >
+                          Ticket Called:
                         </span>
-                        <div className="text-6xl sm:text-7xl font-black font-mono text-white tracking-tight">
+                        <div className="text-5xl sm:text-6xl font-black font-mono text-white tracking-tight">
                           {item.ticketNumber}
                         </div>
-                        <div className="text-sm font-medium text-slate-300 mt-1">
+                        <div className="text-xs font-medium text-slate-300 mt-1">
                           Patient: {item.patientName.split(" ")[0]} {item.patientName.split(" ")[1]?.[0] || ""}.
                         </div>
                       </div>
 
-                      <div className="bg-slate-900/90 border border-amber-400/50 rounded-2xl p-5 text-right sm:min-w-[240px]">
-                        <span className="text-xs text-slate-400 block mb-1">
-                          Please Proceed To:
+                      <div className="bg-slate-900/90 border border-slate-700 rounded-xl p-4 text-right sm:min-w-[200px]">
+                        <span className="text-[11px] text-slate-400 block mb-0.5">
+                          Proceed to:
                         </span>
-                        <div className="text-2xl sm:text-3xl font-black text-amber-300">
+                        <div
+                          className="text-xl sm:text-2xl font-black"
+                          style={{ color: "#96D7C6" }}
+                        >
                           {item.assignedRoom}
                         </div>
-                        <div className="text-xs text-slate-300 mt-1 font-medium">
+                        <div className="text-xs text-slate-300 mt-0.5">
                           {item.doctorName}
                         </div>
                       </div>
@@ -112,19 +140,19 @@ export const WaitingRoomDisplay: React.FC<WaitingRoomDisplayProps> = ({
               </div>
             )}
 
-            {/* Currently In Exam Rooms */}
+            {/* In Consultation */}
             {inConsultItems.length > 0 && (
-              <div className="pt-4">
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-3">
-                  Currently in Consultation:
+              <div className="pt-2">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">
+                  In Exam Rooms:
                 </span>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {inConsultItems.map((item) => (
                     <div
                       key={item.id}
-                      className="bg-slate-900 border border-slate-800 p-3 rounded-xl flex items-center justify-between text-xs"
+                      className="bg-slate-900 border border-slate-800 p-2.5 rounded-xl flex items-center justify-between text-xs"
                     >
-                      <span className="font-mono font-bold text-teal-400">
+                      <span className="font-mono font-bold" style={{ color: "#96D7C6" }}>
                         {item.ticketNumber}
                       </span>
                       <span className="text-slate-400">{item.assignedRoom}</span>
@@ -135,37 +163,40 @@ export const WaitingRoomDisplay: React.FC<WaitingRoomDisplayProps> = ({
             )}
           </div>
 
-          {/* NEXT IN LINE (Col 5) */}
-          <div className="lg:col-span-5 space-y-4">
+          {/* UPCOMING QUEUE */}
+          <div className="lg:col-span-5 space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-slate-300 text-sm font-bold uppercase tracking-wider">
-                Upcoming in Queue
+              <span className="text-slate-300 text-xs font-bold uppercase tracking-wider">
+                Next in Queue
               </span>
               <span className="text-xs text-slate-500">
-                {waitingItems.length} awaiting triage
+                {waitingItems.length} waiting
               </span>
             </div>
 
-            <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-4 sm:p-5 divide-y divide-slate-800">
+            <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-3.5 divide-y divide-slate-800">
               {waitingItems.length === 0 ? (
-                <div className="py-8 text-center text-slate-500 text-xs">
-                  No additional patients currently waiting.
+                <div className="py-6 text-center text-slate-500 text-xs">
+                  No additional patients waiting.
                 </div>
               ) : (
                 waitingItems.map((item, index) => (
                   <div
                     key={item.id}
-                    className="py-3.5 flex items-center justify-between first:pt-0 last:pb-0"
+                    className="py-2.5 flex items-center justify-between first:pt-0 last:pb-0"
                   >
-                    <div className="flex items-center gap-3">
-                      <span className="w-6 h-6 rounded-full bg-slate-800 text-slate-400 flex items-center justify-center text-xs font-bold">
+                    <div className="flex items-center gap-2.5">
+                      <span className="w-5 h-5 rounded-full bg-slate-800 text-slate-400 flex items-center justify-center text-[10px] font-bold">
                         {index + 1}
                       </span>
                       <div>
-                        <div className="font-mono text-xl font-bold text-sky-400">
+                        <div
+                          className="font-mono text-base font-bold"
+                          style={{ color: "#5AA7A7" }}
+                        >
                           {item.ticketNumber}
                         </div>
-                        <div className="text-[11px] text-slate-400">
+                        <div className="text-[10px] text-slate-400">
                           {item.department}
                         </div>
                       </div>
@@ -175,38 +206,35 @@ export const WaitingRoomDisplay: React.FC<WaitingRoomDisplayProps> = ({
                       <span className="text-xs font-semibold text-slate-300 block">
                         ~{item.estimatedWaitMinutes} min
                       </span>
-                      <span className="text-[10px] text-slate-500">
-                        Est. Wait
-                      </span>
                     </div>
                   </div>
                 ))
               )}
             </div>
 
-            {/* Assistance banner */}
-            <div className="bg-slate-900/40 border border-slate-800 p-4 rounded-2xl flex items-start gap-3 text-xs text-slate-400">
-              <Info className="w-4 h-4 text-sky-400 shrink-0 mt-0.5" />
+            <div className="bg-slate-900/40 border border-slate-800 p-3 rounded-xl flex items-start gap-2.5 text-xs text-slate-400">
+              <Info className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: "#5AA7A7" }} />
               <span>
-                Need water, a wheelchair, or experiencing severe changes in condition? Please press the call button or visit the front desk nurse.
+                Need assistance? Please alert staff at the front desk.
               </span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Bottom Clinic News Ticker */}
-      <div className="mt-8 pt-4 border-t border-slate-800 text-xs text-slate-400 flex flex-wrap items-center justify-between gap-4">
+      {/* Ticker */}
+      <div className="mt-6 pt-3 border-t border-slate-800 text-xs text-slate-400 flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <span className="px-2 py-0.5 rounded bg-sky-950 text-sky-400 font-bold text-[10px]">
-            ANNOUNCEMENT
+          <span
+            className="px-1.5 py-0.5 rounded font-bold text-[10px]"
+            style={{ backgroundColor: "rgba(90, 167, 167, 0.2)", color: "#5AA7A7" }}
+          >
+            INFO
           </span>
-          <span>
-            Complimentary seasonal flu vaccinations and COVID-19 boosters available today at Station 4.
-          </span>
+          <span>Flu vaccines and booster shots available at desk today.</span>
         </div>
-        <div className="font-mono text-slate-500 text-[11px]">
-          Lobby Monitor Feed #01 • Auto-Refreshing
+        <div className="font-mono text-slate-500 text-[10px]">
+          Lobby Screen Feed
         </div>
       </div>
     </div>

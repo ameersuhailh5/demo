@@ -3,7 +3,6 @@ import { Appointment, PatientRecord, QueueItem, Language } from "../types";
 import {
   Search,
   QrCode,
-  Calendar,
   Clock,
   User,
   CheckCircle2,
@@ -13,8 +12,6 @@ import {
   Camera,
   ShieldCheck,
   Building2,
-  Sparkles,
-  Phone,
 } from "lucide-react";
 import { playSuccessChime, playButtonTap } from "../utils/audio";
 
@@ -33,7 +30,6 @@ export const CheckInFlow: React.FC<CheckInFlowProps> = ({
   initialCode = "",
   onCheckInComplete,
   onCancel,
-  language,
 }) => {
   const [lookupMethod, setLookupMethod] = useState<"code" | "phone" | "camera">(
     initialCode ? "code" : "code"
@@ -53,7 +49,6 @@ export const CheckInFlow: React.FC<CheckInFlowProps> = ({
   const [copayProcessing, setCopayProcessing] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
-  // If initialCode provided, automatically search
   useEffect(() => {
     if (initialCode) {
       handleSearch(initialCode, "", "");
@@ -82,7 +77,7 @@ export const CheckInFlow: React.FC<CheckInFlowProps> = ({
       setMatchedPatient(pat || null);
     } else {
       setErrorMsg(
-        "No matching scheduled appointment found for today. Please verify your reference number or phone, or proceed to Walk-In Registration."
+        "Appointment not found. Please check your reference code or register as walk-in."
       );
     }
   };
@@ -92,7 +87,6 @@ export const CheckInFlow: React.FC<CheckInFlowProps> = ({
     setErrorMsg("");
     setTimeout(() => {
       setIsScanning(false);
-      // Automatically match Eleanor Vance MK-101
       const apt = appointments.find((a) => a.confirmationCode === "MK-101");
       if (apt) {
         setMatchedAppointment(apt);
@@ -100,7 +94,7 @@ export const CheckInFlow: React.FC<CheckInFlowProps> = ({
         setMatchedPatient(pat || null);
         playSuccessChime();
       }
-    }, 1500);
+    }, 1200);
   };
 
   const handleFinalizeCheckIn = () => {
@@ -113,7 +107,6 @@ export const CheckInFlow: React.FC<CheckInFlowProps> = ({
       setCopayProcessing(false);
       playSuccessChime();
 
-      // Generate Ticket
       const ticketNum =
         matchedAppointment.ticketNumber ||
         `A-${Math.floor(100 + Math.random() * 899)}`;
@@ -138,14 +131,14 @@ export const CheckInFlow: React.FC<CheckInFlowProps> = ({
         urgency: "routine",
         esiScore: 4,
         chiefComplaint: matchedAppointment.reason,
-        symptoms: hasNewSymptoms ? ["Reported mild symptoms at check-in"] : ["Routine scheduled appointment"],
+        symptoms: hasNewSymptoms ? ["Reported symptoms at check-in"] : ["Routine scheduled appointment"],
         insuranceVerified: true,
         signatureCompleted: true,
         estimatedWaitMinutes: 8,
       };
 
       onCheckInComplete(queueItem);
-    }, 1000);
+    }, 900);
   };
 
   return (
@@ -154,69 +147,75 @@ export const CheckInFlow: React.FC<CheckInFlowProps> = ({
       <button
         id="btn-cancel-checkin"
         onClick={onCancel}
-        className="inline-flex items-center gap-2 text-sm text-slate-600 hover:text-slate-900 mb-6 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 transition-colors"
+        className="inline-flex items-center gap-2 text-xs font-semibold text-slate-600 hover:text-slate-900 mb-6 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 transition-colors"
       >
         <ArrowLeft className="w-4 h-4" />
-        <span>Return to Main Menu</span>
+        <span>Return to Menu</span>
       </button>
 
       {!matchedAppointment ? (
-        <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm">
-          <div className="text-center mb-8">
-            <div className="w-12 h-12 rounded-xl bg-sky-100 text-sky-700 flex items-center justify-center mx-auto mb-3">
+        <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-xs">
+          <div className="text-center mb-6">
+            <div
+              className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-3"
+              style={{ backgroundColor: "#f0fdf9", color: "#5AA7A7" }}
+            >
               <QrCode className="w-6 h-6" />
             </div>
             <h2 className="text-2xl font-bold text-slate-900">
               Appointment Check-In
             </h2>
-            <p className="text-slate-600 text-sm mt-1">
-              Select how you'd like to locate your scheduled visit today
+            <p className="text-slate-600 text-xs sm:text-sm mt-1">
+              Locate your appointment by reference code, phone, or barcode.
             </p>
           </div>
 
-          {/* Lookup Method Tabs */}
+          {/* Tabs */}
           <div className="flex bg-slate-100 p-1 rounded-xl mb-6 text-xs sm:text-sm font-medium">
             <button
               id="tab-lookup-code"
               onClick={() => setLookupMethod("code")}
-              className={`flex-1 py-2.5 rounded-lg text-center transition-all ${
+              className={`flex-1 py-2 rounded-lg text-center transition-all ${
                 lookupMethod === "code"
-                  ? "bg-white text-sky-700 shadow-xs font-semibold"
+                  ? "bg-white shadow-xs font-bold"
                   : "text-slate-600 hover:text-slate-900"
               }`}
+              style={{ color: lookupMethod === "code" ? "#5AA7A7" : undefined }}
             >
               Confirmation Code
             </button>
             <button
               id="tab-lookup-phone"
               onClick={() => setLookupMethod("phone")}
-              className={`flex-1 py-2.5 rounded-lg text-center transition-all ${
+              className={`flex-1 py-2 rounded-lg text-center transition-all ${
                 lookupMethod === "phone"
-                  ? "bg-white text-sky-700 shadow-xs font-semibold"
+                  ? "bg-white shadow-xs font-bold"
                   : "text-slate-600 hover:text-slate-900"
               }`}
+              style={{ color: lookupMethod === "phone" ? "#5AA7A7" : undefined }}
             >
               Phone & Birthday
             </button>
             <button
               id="tab-lookup-camera"
               onClick={() => setLookupMethod("camera")}
-              className={`flex-1 py-2.5 rounded-lg text-center transition-all ${
+              className={`flex-1 py-2 rounded-lg text-center transition-all ${
                 lookupMethod === "camera"
-                  ? "bg-white text-sky-700 shadow-xs font-semibold"
+                  ? "bg-white shadow-xs font-bold"
                   : "text-slate-600 hover:text-slate-900"
               }`}
+              style={{ color: lookupMethod === "camera" ? "#5AA7A7" : undefined }}
             >
-              Scan QR / Barcode
+              Scan Barcode
             </button>
           </div>
 
-          {/* Code Search Form */}
+          {/* Code Search */}
           {lookupMethod === "code" && (
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1">
-                  Appointment Reference / Confirmation Code
+                <label className="block text-xs font-bold text-slate-700 mb-1 uppercase tracking-wider">
+                  Confirmation Code
                 </label>
                 <div className="relative">
                   <input
@@ -224,34 +223,33 @@ export const CheckInFlow: React.FC<CheckInFlowProps> = ({
                     type="text"
                     value={confirmationCode}
                     onChange={(e) => setConfirmationCode(e.target.value.toUpperCase())}
-                    placeholder="e.g. MK-101 or MK-102"
-                    className="w-full text-lg tracking-wider font-mono uppercase bg-slate-50 border border-slate-300 rounded-xl px-4 py-3.5 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white"
+                    placeholder="e.g. MK-101"
+                    className="w-full text-base tracking-wider font-mono uppercase bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 focus:outline-none focus:bg-white"
+                    style={{ borderColor: confirmationCode ? "#5AA7A7" : undefined }}
                   />
-                  <div className="absolute right-3 top-3.5 text-slate-400">
+                  <div className="absolute right-3 top-3 text-slate-400">
                     <Search className="w-5 h-5" />
                   </div>
                 </div>
-                <p className="text-xs text-slate-500 mt-1.5">
-                  Found in your SMS reminder or clinic confirmation email (e.g. MK-101)
-                </p>
               </div>
 
               <button
                 id="btn-submit-code-search"
                 onClick={() => handleSearch(confirmationCode, "", "")}
                 disabled={!confirmationCode.trim()}
-                className="w-full bg-sky-600 hover:bg-sky-700 disabled:opacity-50 text-white font-semibold py-3.5 px-4 rounded-xl shadow-md transition-colors text-base"
+                className="w-full text-white font-bold py-3 px-4 rounded-xl shadow-xs transition-colors text-sm disabled:opacity-50"
+                style={{ backgroundColor: "#5AA7A7" }}
               >
-                Find My Appointment
+                Find Appointment
               </button>
             </div>
           )}
 
-          {/* Phone & Birthday Search Form */}
+          {/* Phone Search */}
           {lookupMethod === "phone" && (
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1">
+                <label className="block text-xs font-bold text-slate-700 mb-1 uppercase tracking-wider">
                   Mobile Phone Number
                 </label>
                 <input
@@ -260,12 +258,12 @@ export const CheckInFlow: React.FC<CheckInFlowProps> = ({
                   value={phoneNumber}
                   onChange={(e) => setPhoneNumber(e.target.value)}
                   placeholder="(555) 234-5678"
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:bg-white"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1">
+                <label className="block text-xs font-bold text-slate-700 mb-1 uppercase tracking-wider">
                   Date of Birth
                 </label>
                 <input
@@ -273,7 +271,7 @@ export const CheckInFlow: React.FC<CheckInFlowProps> = ({
                   type="date"
                   value={dob}
                   onChange={(e) => setDob(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:bg-white"
                 />
               </div>
 
@@ -281,68 +279,80 @@ export const CheckInFlow: React.FC<CheckInFlowProps> = ({
                 id="btn-submit-phone-search"
                 onClick={() => handleSearch("", phoneNumber, dob)}
                 disabled={!phoneNumber.trim()}
-                className="w-full bg-sky-600 hover:bg-sky-700 disabled:opacity-50 text-white font-semibold py-3.5 px-4 rounded-xl shadow-md transition-colors text-base"
+                className="w-full text-white font-bold py-3 px-4 rounded-xl shadow-xs transition-colors text-sm disabled:opacity-50"
+                style={{ backgroundColor: "#5AA7A7" }}
               >
-                Find by Phone Number
+                Find by Phone
               </button>
             </div>
           )}
 
-          {/* Camera Scanner Simulation */}
+          {/* Camera Scanner */}
           {lookupMethod === "camera" && (
             <div className="text-center py-4">
-              <div className="relative w-full max-w-sm mx-auto h-56 bg-slate-950 rounded-2xl overflow-hidden border-2 border-slate-700 flex flex-col items-center justify-center text-white mb-4">
+              <div className="relative w-full max-w-sm mx-auto h-48 bg-slate-900 rounded-2xl overflow-hidden border-2 border-slate-700 flex flex-col items-center justify-center text-white mb-4">
                 {isScanning ? (
-                  <div className="flex flex-col items-center gap-3">
-                    <div className="w-12 h-12 rounded-full border-4 border-sky-400 border-t-transparent animate-spin"></div>
-                    <span className="text-sm font-medium text-sky-200">
-                      Reading barcode optical target...
+                  <div className="flex flex-col items-center gap-2">
+                    <div
+                      className="w-10 h-10 rounded-full border-4 border-t-transparent animate-spin"
+                      style={{ borderColor: "#96D7C6" }}
+                    ></div>
+                    <span className="text-xs font-medium" style={{ color: "#96D7C6" }}>
+                      Reading barcode target...
                     </span>
                   </div>
                 ) : (
                   <>
-                    <Camera className="w-12 h-12 text-slate-500 mb-2" />
+                    <Camera className="w-10 h-10 text-slate-500 mb-2" />
                     <span className="text-xs text-slate-400 px-4">
-                      Hold your mobile appointment pass QR code up to the camera
+                      Hold QR pass in front of camera
                     </span>
                   </>
                 )}
-
-                {/* Laser animation bar */}
-                <div className="absolute inset-x-8 top-1/2 h-0.5 bg-red-500 shadow-lg shadow-red-500 animate-pulse"></div>
+                <div
+                  className="absolute inset-x-8 top-1/2 h-0.5 animate-pulse"
+                  style={{ backgroundColor: "#E2D36B" }}
+                ></div>
               </div>
 
               <button
                 id="btn-simulate-qr-scan"
                 onClick={handleSimulatedScan}
                 disabled={isScanning}
-                className="bg-sky-600 hover:bg-sky-700 text-white font-semibold px-6 py-2.5 rounded-xl shadow-md text-sm transition-colors"
+                className="text-slate-900 font-bold px-5 py-2 rounded-xl text-xs transition-colors"
+                style={{ backgroundColor: "#96D7C6" }}
               >
-                {isScanning ? "Scanning Optical Target..." : "Simulate QR Scan (Eleanor Vance)"}
+                {isScanning ? "Scanning..." : "Simulate QR Scan (MK-101)"}
               </button>
             </div>
           )}
 
-          {/* Error Message */}
           {errorMsg && (
-            <div className="mt-6 p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-sm flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-              <div>
-                <p className="font-semibold">Appointment Not Found</p>
-                <p className="text-xs text-amber-700 mt-0.5">{errorMsg}</p>
-              </div>
+            <div
+              className="mt-5 p-3.5 rounded-xl border text-xs flex items-start gap-2.5"
+              style={{
+                backgroundColor: "#fefce8",
+                borderColor: "#E2D36B",
+                color: "#854d0e",
+              }}
+            >
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+              <span>{errorMsg}</span>
             </div>
           )}
         </div>
       ) : (
         /* Appointment Details Verification & Copay Flow */
-        <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm space-y-6">
+        <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-xs space-y-5">
           <div className="flex items-center justify-between border-b border-slate-200 pb-4">
             <div>
-              <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full">
-                Appointment Verified
+              <span
+                className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
+                style={{ backgroundColor: "#f0fdf4", color: "#4d7c0f" }}
+              >
+                Appointment Confirmed
               </span>
-              <h2 className="text-2xl font-bold text-slate-900 mt-2">
+              <h2 className="text-2xl font-bold text-slate-900 mt-1.5">
                 {matchedAppointment.patientName}
               </h2>
               <p className="text-xs text-slate-500">
@@ -350,109 +360,113 @@ export const CheckInFlow: React.FC<CheckInFlowProps> = ({
               </p>
             </div>
             <div className="text-right">
-              <div className="text-sm font-bold text-sky-700 font-mono bg-sky-50 px-3 py-1.5 rounded-lg border border-sky-200">
+              <div
+                className="text-xs font-bold font-mono px-2.5 py-1 rounded-lg border"
+                style={{
+                  backgroundColor: "#f0fdf9",
+                  color: "#5AA7A7",
+                  borderColor: "#96D7C6",
+                }}
+              >
                 {matchedAppointment.confirmationCode}
               </div>
             </div>
           </div>
 
-          {/* Appointment Metadata Box */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200/80 text-sm">
-            <div className="flex items-start gap-3">
-              <Clock className="w-5 h-5 text-sky-600 shrink-0 mt-0.5" />
+          {/* Details Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200 text-xs">
+            <div className="flex items-start gap-2.5">
+              <Clock className="w-4 h-4 shrink-0 mt-0.5" style={{ color: "#5AA7A7" }} />
               <div>
-                <span className="text-xs text-slate-500 block">Scheduled Time</span>
-                <span className="font-semibold text-slate-900">
+                <span className="text-slate-500 block">Time</span>
+                <span className="font-bold text-slate-900">
                   {matchedAppointment.time} (Today)
                 </span>
               </div>
             </div>
 
-            <div className="flex items-start gap-3">
-              <User className="w-5 h-5 text-teal-600 shrink-0 mt-0.5" />
+            <div className="flex items-start gap-2.5">
+              <User className="w-4 h-4 shrink-0 mt-0.5" style={{ color: "#6C8CBF" }} />
               <div>
-                <span className="text-xs text-slate-500 block">Attending Provider</span>
-                <span className="font-semibold text-slate-900">
+                <span className="text-slate-500 block">Doctor</span>
+                <span className="font-bold text-slate-900">
                   {matchedAppointment.doctorName}
-                </span>
-                <span className="text-xs text-slate-500 block">
-                  {matchedAppointment.specialty}
                 </span>
               </div>
             </div>
 
-            <div className="flex items-start gap-3">
-              <Building2 className="w-5 h-5 text-indigo-600 shrink-0 mt-0.5" />
+            <div className="flex items-start gap-2.5">
+              <Building2 className="w-4 h-4 shrink-0 mt-0.5" style={{ color: "#5AA7A7" }} />
               <div>
-                <span className="text-xs text-slate-500 block">Station & Room</span>
-                <span className="font-semibold text-slate-900">
+                <span className="text-slate-500 block">Location</span>
+                <span className="font-bold text-slate-900">
                   {matchedAppointment.department} — {matchedAppointment.room}
                 </span>
               </div>
             </div>
 
-            <div className="flex items-start gap-3">
-              <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+            <div className="flex items-start gap-2.5">
+              <ShieldCheck className="w-4 h-4 shrink-0 mt-0.5" style={{ color: "#BAC94A" }} />
               <div>
-                <span className="text-xs text-slate-500 block">Insurance Status</span>
-                <span className="font-semibold text-slate-900">
-                  {matchedPatient?.insurance.provider || "BlueCross Verified"}
+                <span className="text-slate-500 block">Insurance</span>
+                <span className="font-bold text-slate-900">
+                  {matchedPatient?.insurance.provider || "Verified"}
                 </span>
               </div>
             </div>
           </div>
 
-          {/* Reason for visit */}
-          <div className="bg-sky-50/70 border border-sky-100 p-3.5 rounded-xl text-xs text-sky-900">
-            <strong>Stated Reason for Visit:</strong> {matchedAppointment.reason}
-          </div>
-
-          {/* Symptom Safety Check */}
-          <div className="border border-slate-200 p-4 rounded-xl">
-            <h3 className="text-sm font-bold text-slate-800 mb-1">
-              Health & Safety Screening
+          {/* Health Screen */}
+          <div className="border border-slate-200 p-3.5 rounded-xl">
+            <h3 className="text-xs font-bold text-slate-800 mb-1">
+              Safety Screening
             </h3>
-            <p className="text-xs text-slate-500 mb-3">
-              Have you developed any sudden acute symptoms today (e.g. chest pain, fever, sudden shortness of breath)?
+            <p className="text-xs text-slate-500 mb-2.5">
+              Any acute new symptoms (chest pain, shortness of breath, severe pain)?
             </p>
-            <div className="flex gap-3">
+            <div className="flex gap-2.5">
               <button
                 type="button"
                 onClick={() => setHasNewSymptoms(false)}
-                className={`flex-1 py-2 px-3 rounded-lg text-xs font-semibold border transition-all ${
+                className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-bold border transition-all ${
                   hasNewSymptoms === false
-                    ? "bg-emerald-600 text-white border-emerald-600"
-                    : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
+                    ? "text-white"
+                    : "bg-white text-slate-700 border-slate-200"
                 }`}
+                style={{
+                  backgroundColor: hasNewSymptoms === false ? "#5AA7A7" : undefined,
+                  borderColor: hasNewSymptoms === false ? "#5AA7A7" : undefined,
+                }}
               >
-                No, Feeling Stable
+                No, Stable
               </button>
               <button
                 type="button"
                 onClick={() => setHasNewSymptoms(true)}
-                className={`flex-1 py-2 px-3 rounded-lg text-xs font-semibold border transition-all ${
+                className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-bold border transition-all ${
                   hasNewSymptoms === true
-                    ? "bg-amber-500 text-white border-amber-500"
-                    : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
+                    ? "text-slate-900"
+                    : "bg-white text-slate-700 border-slate-200"
                 }`}
+                style={{
+                  backgroundColor: hasNewSymptoms === true ? "#E2D36B" : undefined,
+                  borderColor: hasNewSymptoms === true ? "#E2D36B" : undefined,
+                }}
               >
-                Yes, I Have New Symptoms
+                Yes, New Symptoms
               </button>
             </div>
           </div>
 
           {/* Copay Section */}
-          <div className="border border-slate-200 p-4 rounded-xl bg-slate-50">
-            <div className="flex items-center justify-between mb-3">
+          <div className="border border-slate-200 p-3.5 rounded-xl bg-slate-50">
+            <div className="flex items-center justify-between mb-2.5">
               <div className="flex items-center gap-2">
-                <CreditCard className="w-5 h-5 text-sky-600" />
-                <span className="text-sm font-bold text-slate-900">
-                  Insurance Co-Pay
-                </span>
+                <CreditCard className="w-4 h-4" style={{ color: "#6C8CBF" }} />
+                <span className="text-xs font-bold text-slate-900">Co-Pay</span>
               </div>
               <div className="text-right">
-                <span className="text-xs text-slate-500 block">Due Today</span>
-                <span className="text-lg font-bold text-slate-900">
+                <span className="text-base font-bold text-slate-900">
                   ${matchedAppointment.copayAmount.toFixed(2)}
                 </span>
               </div>
@@ -462,55 +476,68 @@ export const CheckInFlow: React.FC<CheckInFlowProps> = ({
               <button
                 type="button"
                 onClick={() => setCopayMethod("card")}
-                className={`py-2 px-2 rounded-lg border text-center transition-all ${
+                className={`py-1.5 px-2 rounded-lg border text-center transition-all ${
                   copayMethod === "card"
-                    ? "bg-sky-600 text-white border-sky-600 font-semibold"
-                    : "bg-white text-slate-700 border-slate-200 hover:bg-slate-100"
+                    ? "text-white font-bold"
+                    : "bg-white text-slate-700 border-slate-200"
                 }`}
+                style={{
+                  backgroundColor: copayMethod === "card" ? "#6C8CBF" : undefined,
+                  borderColor: copayMethod === "card" ? "#6C8CBF" : undefined,
+                }}
               >
-                Tap Credit/Debit
+                Credit / Debit
               </button>
               <button
                 type="button"
                 onClick={() => setCopayMethod("apple_pay")}
-                className={`py-2 px-2 rounded-lg border text-center transition-all ${
+                className={`py-1.5 px-2 rounded-lg border text-center transition-all ${
                   copayMethod === "apple_pay"
-                    ? "bg-sky-600 text-white border-sky-600 font-semibold"
-                    : "bg-white text-slate-700 border-slate-200 hover:bg-slate-100"
+                    ? "text-white font-bold"
+                    : "bg-white text-slate-700 border-slate-200"
                 }`}
+                style={{
+                  backgroundColor: copayMethod === "apple_pay" ? "#6C8CBF" : undefined,
+                  borderColor: copayMethod === "apple_pay" ? "#6C8CBF" : undefined,
+                }}
               >
-                Apple / Google Pay
+                Digital Wallet
               </button>
               <button
                 type="button"
                 onClick={() => setCopayMethod("bill_later")}
-                className={`py-2 px-2 rounded-lg border text-center transition-all ${
+                className={`py-1.5 px-2 rounded-lg border text-center transition-all ${
                   copayMethod === "bill_later"
-                    ? "bg-sky-600 text-white border-sky-600 font-semibold"
-                    : "bg-white text-slate-700 border-slate-200 hover:bg-slate-100"
+                    ? "text-white font-bold"
+                    : "bg-white text-slate-700 border-slate-200"
                 }`}
+                style={{
+                  backgroundColor: copayMethod === "bill_later" ? "#6C8CBF" : undefined,
+                  borderColor: copayMethod === "bill_later" ? "#6C8CBF" : undefined,
+                }}
               >
-                Bill After Visit
+                Bill Later
               </button>
             </div>
           </div>
 
-          {/* Confirm Check-In CTA Button */}
+          {/* Complete CTA */}
           <button
             id="btn-confirm-checkin-final"
             onClick={handleFinalizeCheckIn}
             disabled={copayProcessing}
-            className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold py-4 px-6 rounded-xl shadow-lg shadow-emerald-600/20 text-lg flex items-center justify-center gap-3 transition-all transform hover:-translate-y-0.5 active:translate-y-0"
+            className="w-full text-white font-bold py-3.5 px-6 rounded-xl shadow-md text-base flex items-center justify-center gap-2.5 transition-all disabled:opacity-50"
+            style={{ backgroundColor: "#5AA7A7" }}
           >
             {copayProcessing ? (
               <>
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                <span>Finalizing Check-In & Generating Ticket...</span>
+                <span>Finalizing Check-In...</span>
               </>
             ) : (
               <>
-                <CheckCircle2 className="w-6 h-6" />
-                <span>Complete Check-In & Print Ticket Pass</span>
+                <CheckCircle2 className="w-5 h-5" />
+                <span>Complete Check-In & Get Ticket</span>
               </>
             )}
           </button>

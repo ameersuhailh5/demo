@@ -1,1 +1,98 @@
 @import "tailwindcss";
+
+@theme {
+  --color-brand-teal: #5AA7A7;
+  --color-brand-mint: #96D7C6;
+  --color-brand-lime: #BAC94A;
+  --color-brand-yellow: #E2D36B;
+  --color-brand-blue: #6C8CBF;
+}
+
+:root {
+  --palette-teal: #5AA7A7;
+  --palette-mint: #96D7C6;
+  --palette-lime: #BAC94A;
+  --palette-yellow: #E2D36B;
+  --palette-blue: #6C8CBF;
+}
+
+/* Custom Gradient and Accent Helpers */
+.bg-palette-teal {
+  background-color: #5AA7A7;
+}
+.text-palette-teal {
+  color: #5AA7A7;
+}
+.border-palette-teal {
+  border-color: #5AA7A7;
+}
+
+.bg-palette-mint {
+  background-color: #96D7C6;
+}
+.text-palette-mint {
+  color: #96D7C6;
+}
+.border-palette-mint {
+  border-color: #96D7C6;
+}
+
+.bg-palette-lime {
+  background-color: #BAC94A;
+}
+.text-palette-lime {
+  color: #BAC94A;
+}
+.border-palette-lime {
+  border-color: #BAC94A;
+}
+
+.bg-palette-yellow {
+  background-color: #E2D36B;
+}
+.text-palette-yellow {
+  color: #E2D36B;
+}
+.border-palette-yellow {
+  border-color: #E2D36B;
+}
+
+.bg-palette-blue {
+  background-color: #6C8CBF;
+}
+.text-palette-blue {
+  color: #6C8CBF;
+}
+.border-palette-blue {
+  border-color: #6C8CBF;
+}
+
+/* Palette Gradients from Reference Image */
+.bg-gradient-teal-mint {
+  background: linear-gradient(135deg, #5AA7A7 0%, #96D7C6 100%);
+}
+
+.bg-gradient-mint-lime {
+  background: linear-gradient(135deg, #96D7C6 0%, #BAC94A 100%);
+}
+
+.bg-gradient-lime-yellow {
+  background: linear-gradient(135deg, #BAC94A 0%, #E2D36B 100%);
+}
+
+.bg-gradient-yellow-mint {
+  background: linear-gradient(135deg, #E2D36B 0%, #96D7C6 100%);
+}
+
+.bg-gradient-blue-teal {
+  background: linear-gradient(135deg, #6C8CBF 0%, #5AA7A7 100%);
+}
+
+.bg-gradient-hero {
+  background: linear-gradient(135deg, #5AA7A7 0%, #6C8CBF 100%);
+}
+
+/* Smooth transitions */
+button, input, select, textarea {
+  transition: all 0.15s ease-in-out;
+}

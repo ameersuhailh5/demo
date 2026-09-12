@@ -1,21 +1,17 @@
 import React, { useState } from "react";
-import { QueueItem, PatientRecord, UrgencyLevel } from "../types";
+import { QueueItem, PatientRecord } from "../types";
 import {
   Users,
-  Clock,
-  CheckCircle2,
   AlertTriangle,
   Stethoscope,
   Volume2,
   FileText,
   Search,
   Filter,
-  ArrowUpRight,
-  Shield,
   Activity,
-  HeartPulse,
+  CheckCircle2,
 } from "lucide-react";
-import { playClinicChime, playButtonTap } from "../utils/audio";
+import { playClinicChime } from "../utils/audio";
 
 interface StaffPortalProps {
   queue: QueueItem[];
@@ -28,13 +24,12 @@ interface StaffPortalProps {
 
 export const StaffPortal: React.FC<StaffPortalProps> = ({
   queue,
-  patients,
   onCallPatient,
   onUpdateStatus,
   onOpenEHR,
   onAddNewWalkIn,
 }) => {
-  const [filterDepartment, setFilterDepartment] = useState("all");
+  const [filterDepartment] = useState("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -70,100 +65,100 @@ export const StaffPortal: React.FC<StaffPortalProps> = ({
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Top Clinical Stats Banner */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <div className="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      {/* Top Clinical Stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 mb-6">
+        <div className="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              Waiting In Lobby
+            <span className="text-[11px] font-bold text-slate-500 uppercase">
+              Waiting Lobby
             </span>
-            <Users className="w-5 h-5 text-sky-600" />
+            <Users className="w-4 h-4" style={{ color: "#5AA7A7" }} />
           </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-3xl font-extrabold text-slate-900">
+          <div className="mt-1 flex items-baseline gap-1.5">
+            <span className="text-2xl font-extrabold text-slate-900">
               {waitingPatients.length}
             </span>
-            <span className="text-xs text-slate-500">patients</span>
+            <span className="text-[11px] text-slate-500">patients</span>
           </div>
         </div>
 
-        <div className="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs">
+        <div className="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              High Priority / ESI 1-2
+            <span className="text-[11px] font-bold text-slate-500 uppercase">
+              High Priority (ESI 1-2)
             </span>
-            <AlertTriangle className="w-5 h-5 text-rose-600" />
+            <AlertTriangle className="w-4 h-4" style={{ color: "#E2D36B" }} />
           </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-3xl font-extrabold text-rose-600">
+          <div className="mt-1 flex items-baseline gap-1.5">
+            <span className="text-2xl font-extrabold" style={{ color: highUrgencyCount > 0 ? "#dc2626" : "#5AA7A7" }}>
               {highUrgencyCount}
             </span>
-            <span className="text-xs text-rose-600 font-medium">
-              {highUrgencyCount > 0 ? "Requires Immediate Bed" : "All Stable"}
+            <span className="text-[11px] text-slate-500">
+              {highUrgencyCount > 0 ? "urgent attention" : "stable"}
             </span>
           </div>
         </div>
 
-        <div className="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs">
+        <div className="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              In Consultation
+            <span className="text-[11px] font-bold text-slate-500 uppercase">
+              In Exam
             </span>
-            <Stethoscope className="w-5 h-5 text-teal-600" />
+            <Stethoscope className="w-4 h-4" style={{ color: "#6C8CBF" }} />
           </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-3xl font-extrabold text-teal-700">
+          <div className="mt-1 flex items-baseline gap-1.5">
+            <span className="text-2xl font-extrabold" style={{ color: "#6C8CBF" }}>
               {inConsultCount}
             </span>
-            <span className="text-xs text-slate-500">exam rooms active</span>
+            <span className="text-[11px] text-slate-500">active rooms</span>
           </div>
         </div>
 
-        <div className="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs">
+        <div className="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              Completed Today
+            <span className="text-[11px] font-bold text-slate-500 uppercase">
+              Discharged
             </span>
-            <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+            <CheckCircle2 className="w-4 h-4" style={{ color: "#BAC94A" }} />
           </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-3xl font-extrabold text-slate-900">
+          <div className="mt-1 flex items-baseline gap-1.5">
+            <span className="text-2xl font-extrabold text-slate-900">
               {completedCount}
             </span>
-            <span className="text-xs text-slate-500">encounters</span>
+            <span className="text-[11px] text-slate-500">completed</span>
           </div>
         </div>
       </div>
 
-      {/* Control Bar */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 mb-6 shadow-xs flex flex-col md:flex-row items-center justify-between gap-4">
+      {/* Controls */}
+      <div className="bg-white border border-slate-200 rounded-2xl p-3.5 mb-5 shadow-xs flex flex-col md:flex-row items-center justify-between gap-3">
         {/* Search */}
         <div className="relative w-full md:w-80">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
           <input
             id="input-staff-search"
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search patient, ticket or MRN..."
-            className="w-full bg-slate-50 border border-slate-300 rounded-xl pl-9 pr-4 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white"
+            className="w-full bg-slate-50 border border-slate-300 rounded-xl pl-9 pr-3 py-1.5 text-xs focus:outline-none focus:bg-white"
           />
         </div>
 
         {/* Filters & Actions */}
-        <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto justify-end">
-          <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl text-xs">
+        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto justify-end">
+          <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 px-2.5 py-1.5 rounded-xl text-xs">
             <Filter className="w-3.5 h-3.5 text-slate-500" />
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="bg-transparent focus:outline-none text-slate-700 cursor-pointer font-medium"
+              className="bg-transparent focus:outline-none text-slate-700 cursor-pointer font-medium text-xs"
             >
               <option value="all">All Statuses</option>
               <option value="waiting">Waiting in Lobby</option>
               <option value="called">Called to Room</option>
-              <option value="in_consultation">In Consultation</option>
+              <option value="in_consultation">In Exam</option>
               <option value="completed">Completed</option>
             </select>
           </div>
@@ -171,43 +166,44 @@ export const StaffPortal: React.FC<StaffPortalProps> = ({
           <button
             id="btn-staff-add-walkin"
             onClick={onAddNewWalkIn}
-            className="bg-sky-600 hover:bg-sky-700 text-white font-semibold text-xs px-4 py-2 rounded-xl shadow-xs transition-colors"
+            className="text-white font-bold text-xs px-3.5 py-2 rounded-xl shadow-xs transition-colors"
+            style={{ backgroundColor: "#5AA7A7" }}
           >
-            + Register Walk-In At Desk
+            + Register Walk-In
           </button>
         </div>
       </div>
 
-      {/* Live Patient Queue Table */}
+      {/* Patient Queue Table */}
       <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
-        <div className="px-6 py-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
-          <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-            <Activity className="w-5 h-5 text-sky-600" />
-            <span>Active Triage & Intake Queue</span>
+        <div className="px-5 py-3 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+          <h2 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+            <Activity className="w-4 h-4" style={{ color: "#5AA7A7" }} />
+            <span>Live Triage Queue</span>
           </h2>
-          <span className="text-xs text-slate-500 font-medium">
-            Real-Time Sync with Kiosks & Lobby Monitors
+          <span className="text-[11px] text-slate-500 font-medium">
+            Python Backend Sync
           </span>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider bg-slate-50/50">
-                <th className="py-3.5 px-4">Ticket / ESI</th>
-                <th className="py-3.5 px-4">Patient & MRN</th>
-                <th className="py-3.5 px-4">Chief Complaint & Pain</th>
-                <th className="py-3.5 px-4">Assigned Station</th>
-                <th className="py-3.5 px-4">Wait Time</th>
-                <th className="py-3.5 px-4">Status</th>
-                <th className="py-3.5 px-4 text-right">Clinical Actions</th>
+              <tr className="border-b border-slate-200 text-[10px] font-bold text-slate-500 uppercase tracking-wider bg-slate-50/50">
+                <th className="py-2.5 px-3.5">Ticket / ESI</th>
+                <th className="py-2.5 px-3.5">Patient & MRN</th>
+                <th className="py-2.5 px-3.5">Complaint</th>
+                <th className="py-2.5 px-3.5">Station</th>
+                <th className="py-2.5 px-3.5">Time</th>
+                <th className="py-2.5 px-3.5">Status</th>
+                <th className="py-2.5 px-3.5 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-xs">
               {filteredQueue.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-slate-400">
-                    No matching patient records in the queue.
+                  <td colSpan={7} className="py-10 text-center text-slate-400">
+                    No matching records in queue.
                   </td>
                 </tr>
               ) : (
@@ -224,134 +220,150 @@ export const StaffPortal: React.FC<StaffPortalProps> = ({
                           : ""
                       }`}
                     >
-                      {/* Ticket & Triage Badge */}
-                      <td className="py-4 px-4 whitespace-nowrap">
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono font-black text-slate-900 text-sm bg-slate-100 px-2 py-1 rounded-md border border-slate-200">
+                      {/* Ticket & Badge */}
+                      <td className="py-3 px-3.5 whitespace-nowrap">
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-mono font-bold text-slate-900 text-xs bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
                             {item.ticketNumber}
                           </span>
                           <span
-                            className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-                              item.esiScore <= 2
-                                ? "bg-rose-100 text-rose-800 border border-rose-200"
-                                : item.esiScore === 3
-                                ? "bg-amber-100 text-amber-800 border border-amber-200"
-                                : "bg-sky-100 text-sky-800 border border-sky-200"
-                            }`}
+                            className="px-1.5 py-0.5 rounded-full text-[9px] font-bold uppercase border"
+                            style={{
+                              backgroundColor:
+                                item.esiScore <= 2
+                                  ? "#fee2e2"
+                                  : item.esiScore === 3
+                                  ? "#fef9c3"
+                                  : "#e0f2fe",
+                              color:
+                                item.esiScore <= 2
+                                  ? "#991b1b"
+                                  : item.esiScore === 3
+                                  ? "#854d0e"
+                                  : "#0369a1",
+                              borderColor:
+                                item.esiScore <= 2
+                                  ? "#fca5a5"
+                                  : item.esiScore === 3
+                                  ? "#E2D36B"
+                                  : "#6C8CBF",
+                            }}
                           >
                             ESI {item.esiScore}
                           </span>
                         </div>
                       </td>
 
-                      {/* Patient Name & MRN */}
-                      <td className="py-4 px-4">
-                        <div className="font-bold text-slate-900">
-                          {item.patientName}
-                        </div>
-                        <div className="text-[11px] font-mono text-slate-500">
-                          {item.mrn} • {item.type === "walk_in" ? "Walk-In" : "Scheduled"}
+                      {/* Patient & MRN */}
+                      <td className="py-3 px-3.5">
+                        <div className="font-bold text-slate-900">{item.patientName}</div>
+                        <div className="text-[10px] font-mono text-slate-500">
+                          {item.mrn}
                         </div>
                       </td>
 
-                      {/* Chief Complaint */}
-                      <td className="py-4 px-4 max-w-xs">
-                        <div className="text-slate-800 line-clamp-1 font-medium">
+                      {/* Complaint */}
+                      <td className="py-3 px-3.5 max-w-xs">
+                        <div className="text-slate-800 line-clamp-1 font-medium text-xs">
                           {item.chiefComplaint}
                         </div>
-                        <div className="text-[11px] text-slate-500 flex items-center gap-2 mt-0.5">
-                          <span>Pain: {item.painLevel ?? 0}/10</span>
-                          {item.symptoms.length > 0 && (
-                            <span>• {item.symptoms.slice(0, 2).join(", ")}</span>
-                          )}
+                        <div className="text-[10px] text-slate-500">
+                          Pain: {item.painLevel ?? 0}/10
                         </div>
                       </td>
 
-                      {/* Room & Doctor */}
-                      <td className="py-4 px-4 whitespace-nowrap">
-                        <div className="font-semibold text-sky-700">
+                      {/* Station */}
+                      <td className="py-3 px-3.5 whitespace-nowrap">
+                        <div className="font-bold" style={{ color: "#5AA7A7" }}>
                           {item.assignedRoom}
                         </div>
-                        <div className="text-[11px] text-slate-500">
+                        <div className="text-[10px] text-slate-500">
                           {item.doctorName}
                         </div>
                       </td>
 
                       {/* Time */}
-                      <td className="py-4 px-4 whitespace-nowrap">
-                        <div className="text-slate-800 font-medium">
+                      <td className="py-3 px-3.5 whitespace-nowrap">
+                        <div className="text-slate-800 font-medium text-xs">
                           {item.checkInTime}
                         </div>
-                        <div className="text-[11px] text-slate-400">
-                          ~{item.estimatedWaitMinutes}m est.
+                        <div className="text-[10px] text-slate-400">
+                          ~{item.estimatedWaitMinutes}m wait
                         </div>
                       </td>
 
                       {/* Status */}
-                      <td className="py-4 px-4 whitespace-nowrap">
+                      <td className="py-3 px-3.5 whitespace-nowrap">
                         <span
-                          className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold capitalize ${
-                            item.status === "waiting"
-                              ? "bg-slate-100 text-slate-700"
-                              : item.status === "called"
-                              ? "bg-amber-100 text-amber-800 animate-pulse"
-                              : item.status === "in_consultation"
-                              ? "bg-teal-100 text-teal-800"
-                              : "bg-emerald-100 text-emerald-800"
-                          }`}
+                          className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold capitalize"
+                          style={{
+                            backgroundColor:
+                              item.status === "waiting"
+                                ? "#f1f5f9"
+                                : item.status === "called"
+                                ? "#fef9c3"
+                                : item.status === "in_consultation"
+                                ? "#e0f2fe"
+                                : "#dcfce7",
+                            color:
+                              item.status === "waiting"
+                                ? "#475569"
+                                : item.status === "called"
+                                ? "#854d0e"
+                                : item.status === "in_consultation"
+                                ? "#6C8CBF"
+                                : "#15803d",
+                          }}
                         >
                           {item.status.replace("_", " ")}
                         </span>
                       </td>
 
                       {/* Actions */}
-                      <td className="py-4 px-4 whitespace-nowrap text-right">
-                        <div className="flex items-center justify-end gap-1.5">
-                          {/* Call Button */}
+                      <td className="py-3 px-3.5 whitespace-nowrap text-right">
+                        <div className="flex items-center justify-end gap-1">
                           {item.status === "waiting" && (
                             <button
                               id={`btn-call-patient-${item.id}`}
                               onClick={() => handleCall(item)}
-                              className="bg-amber-500 hover:bg-amber-600 text-white font-semibold px-3 py-1.5 rounded-lg flex items-center gap-1 shadow-2xs transition-colors"
-                              title="Announce chime and display on Lobby TV"
+                              className="text-slate-900 font-bold px-2.5 py-1 rounded-lg flex items-center gap-1 text-xs shadow-2xs"
+                              style={{ backgroundColor: "#E2D36B" }}
                             >
-                              <Volume2 className="w-3.5 h-3.5" />
+                              <Volume2 className="w-3 h-3" />
                               <span>Call</span>
                             </button>
                           )}
 
-                          {/* Move to In Consult */}
                           {item.status === "called" && (
                             <button
                               id={`btn-start-consult-${item.id}`}
                               onClick={() => onUpdateStatus(item.id, "in_consultation")}
-                              className="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-3 py-1.5 rounded-lg flex items-center gap-1 shadow-2xs transition-colors"
+                              className="text-white font-bold px-2.5 py-1 rounded-lg flex items-center gap-1 text-xs shadow-2xs"
+                              style={{ backgroundColor: "#6C8CBF" }}
                             >
-                              <Stethoscope className="w-3.5 h-3.5" />
-                              <span>In Exam</span>
+                              <Stethoscope className="w-3 h-3" />
+                              <span>Exam</span>
                             </button>
                           )}
 
-                          {/* Complete visit */}
                           {item.status === "in_consultation" && (
                             <button
                               id={`btn-complete-visit-${item.id}`}
                               onClick={() => onUpdateStatus(item.id, "completed")}
-                              className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-3 py-1.5 rounded-lg flex items-center gap-1 shadow-2xs transition-colors"
+                              className="text-slate-900 font-bold px-2.5 py-1 rounded-lg flex items-center gap-1 text-xs shadow-2xs"
+                              style={{ backgroundColor: "#BAC94A" }}
                             >
-                              <CheckCircle2 className="w-3.5 h-3.5" />
+                              <CheckCircle2 className="w-3 h-3" />
                               <span>Discharge</span>
                             </button>
                           )}
 
-                          {/* View EHR & Triage Record */}
                           <button
                             id={`btn-view-ehr-${item.id}`}
                             onClick={() => onOpenEHR(item.mrn, item)}
-                            className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-2.5 py-1.5 rounded-lg flex items-center gap-1 transition-colors"
-                            title="Open Electronic Health Record & SBAR note"
+                            className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-2 py-1 rounded-lg flex items-center gap-1 text-xs"
                           >
-                            <FileText className="w-3.5 h-3.5 text-slate-600" />
+                            <FileText className="w-3 h-3 text-slate-500" />
                             <span>EHR</span>
                           </button>
                         </div>

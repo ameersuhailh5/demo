@@ -4,12 +4,7 @@ import {
   QrCode,
   Printer,
   CheckCircle2,
-  Clock,
-  Building2,
-  User,
-  Shield,
   ArrowRight,
-  Share2,
 } from "lucide-react";
 import { playButtonTap } from "../utils/audio";
 
@@ -45,100 +40,105 @@ export const TicketPassModal: React.FC<TicketPassModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 backdrop-blur-xs p-4 overflow-y-auto">
-      <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-200 animate-in fade-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 p-4 overflow-y-auto">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden border border-slate-200">
         {/* Top Header */}
-        <div className="bg-gradient-to-r from-sky-600 to-teal-600 text-white p-6 text-center relative">
-          <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-xs flex items-center justify-center mx-auto mb-2">
-            <CheckCircle2 className="w-7 h-7 text-white" />
+        <div
+          className="text-white p-5 text-center relative"
+          style={{ backgroundColor: "#5AA7A7" }}
+        >
+          <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center mx-auto mb-1.5">
+            <CheckCircle2 className="w-6 h-6 text-white" />
           </div>
-          <span className="text-xs font-semibold tracking-wider uppercase opacity-90">
+          <span className="text-[10px] font-bold tracking-wider uppercase opacity-90">
             Check-In Confirmed
           </span>
-          <h2 className="text-2xl font-black mt-0.5">MetroHealth Clinic</h2>
-          <p className="text-xs text-sky-100 mt-1">
-            Ambulatory & Urgent Care Center
-          </p>
+          <h2 className="text-xl font-black mt-0.5">Clinic Queue Ticket</h2>
 
-          <div className="absolute top-4 right-4 bg-black/20 text-white text-[10px] font-mono px-2 py-0.5 rounded-full">
-            Auto-reset: {secondsRemaining}s
+          <div className="absolute top-3 right-3 bg-black/20 text-white text-[10px] font-mono px-2 py-0.5 rounded-full">
+            {secondsRemaining}s
           </div>
         </div>
 
-        {/* Ticket Body with perforated visual dividers */}
-        <div className="p-6 space-y-5">
-          {/* Main Ticket Callout */}
-          <div className="text-center py-3 bg-slate-50 border-2 border-dashed border-sky-300 rounded-2xl">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
-              Your Queue Ticket Number
+        {/* Ticket Body */}
+        <div className="p-5 space-y-4 text-xs">
+          <div
+            className="text-center py-3 bg-slate-50 border-2 border-dashed rounded-xl"
+            style={{ borderColor: "#96D7C6" }}
+          >
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
+              Ticket Number
             </span>
-            <span className="text-5xl font-black text-sky-700 tracking-tight font-mono block my-1">
+            <span
+              className="text-4xl font-black tracking-tight font-mono block my-0.5"
+              style={{ color: "#5AA7A7" }}
+            >
               {ticket.ticketNumber}
             </span>
-            <span className="text-xs font-medium text-slate-600">
-              Estimated Wait:{" "}
+            <span className="text-[11px] text-slate-600">
+              Est. Wait:{" "}
               <strong className="text-slate-900">
-                ~{ticket.estimatedWaitMinutes} minutes
+                ~{ticket.estimatedWaitMinutes} min
               </strong>
             </span>
           </div>
 
-          {/* Details Table */}
-          <div className="space-y-2.5 text-xs text-slate-700 border-t border-b border-slate-100 py-3">
+          <div className="space-y-1.5 text-xs text-slate-700 border-t border-b border-slate-100 py-2.5">
             <div className="flex justify-between">
-              <span className="text-slate-500">Patient Name:</span>
+              <span className="text-slate-500">Patient:</span>
               <span className="font-bold text-slate-900">{ticket.patientName}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-500">Medical Record (MRN):</span>
+              <span className="text-slate-500">MRN:</span>
               <span className="font-mono text-slate-800">{ticket.mrn}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-500">Assigned Provider:</span>
+              <span className="text-slate-500">Provider:</span>
               <span className="font-medium text-slate-900">{ticket.doctorName}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-500">Department / Room:</span>
-              <span className="font-bold text-sky-700">{ticket.assignedRoom}</span>
+              <span className="text-slate-500">Room:</span>
+              <span className="font-bold" style={{ color: "#5AA7A7" }}>
+                {ticket.assignedRoom}
+              </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-500">Intake Timestamp:</span>
+              <span className="text-slate-500">Time:</span>
               <span className="text-slate-700">{ticket.checkInTime}</span>
             </div>
           </div>
 
-          {/* QR Code and Instructions */}
-          <div className="flex items-center gap-4 bg-slate-50 p-3 rounded-xl border border-slate-200">
-            <div className="w-16 h-16 bg-white p-1 rounded-lg border border-slate-200 flex items-center justify-center shrink-0">
-              <QrCode className="w-14 h-14 text-slate-900" />
+          <div className="flex items-center gap-3 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+            <div className="w-12 h-12 bg-white p-1 rounded-lg border border-slate-200 flex items-center justify-center shrink-0">
+              <QrCode className="w-10 h-10 text-slate-900" />
             </div>
             <div className="text-xs text-slate-600">
-              <p className="font-bold text-slate-800 mb-0.5">
-                Scan on Mobile for Live Updates
+              <p className="font-bold text-slate-800">
+                Lobby Calling Display
               </p>
-              <p className="text-[11px] leading-tight text-slate-500">
-                Please take a seat in Waiting Zone A. Watch the monitor screens for your ticket number.
+              <p className="text-[11px] text-slate-500">
+                Please take a seat. Your number will appear on the lobby monitor.
               </p>
             </div>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex gap-3 pt-2">
+          <div className="flex gap-2 pt-1">
             <button
               id="btn-print-ticket-pass"
               onClick={handlePrint}
-              className="flex-1 py-3 px-3 rounded-xl border border-slate-300 hover:bg-slate-50 font-semibold text-slate-700 text-xs flex items-center justify-center gap-2 transition-colors"
+              className="flex-1 py-2.5 px-3 rounded-xl border border-slate-300 hover:bg-slate-50 font-semibold text-slate-700 text-xs flex items-center justify-center gap-1.5 transition-colors"
             >
-              <Printer className="w-4 h-4 text-slate-600" />
-              <span>Print Paper Slip</span>
+              <Printer className="w-3.5 h-3.5" />
+              <span>Print</span>
             </button>
             <button
               id="btn-finish-kiosk-session"
               onClick={onClose}
-              className="flex-1 py-3 px-4 rounded-xl bg-sky-600 hover:bg-sky-700 font-bold text-white text-xs flex items-center justify-center gap-2 shadow-md transition-colors"
+              className="flex-1 py-2.5 px-3 rounded-xl text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition-colors"
+              style={{ backgroundColor: "#5AA7A7" }}
             >
-              <span>Finish & Return</span>
-              <ArrowRight className="w-4 h-4" />
+              <span>Done</span>
+              <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
