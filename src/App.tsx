@@ -28,6 +28,7 @@ import { EHRGatewayView } from "./components/EHRGatewayView";
 import { TicketPassModal } from "./components/TicketPassModal";
 import { UpdateRecordsModal } from "./components/UpdateRecordsModal";
 import { StaffAuthModal } from "./components/StaffAuthModal";
+import { LanguageSelectionModal } from "./components/LanguageSelectionModal";
 import { playClinicChime, playSuccessChime } from "./utils/audio";
 import { Lock, ShieldAlert } from "lucide-react";
 
@@ -72,6 +73,7 @@ export default function App() {
     queueItem?: QueueItem;
   } | null>(null);
   const [showUpdateRecordsModal, setShowUpdateRecordsModal] = useState(false);
+  const [showLanguageModal, setShowLanguageModal] = useState(false);
 
   // Auto-calculated statistics
   const activeWaitingCount = queue.filter(
@@ -449,6 +451,7 @@ export default function App() {
         activeWaitingCount={activeWaitingCount}
         authUser={authUser}
         onSignOut={handleSignOut}
+        onOpenLanguageModal={() => setShowLanguageModal(true)}
       />
 
       {/* Main Viewport Container */}
@@ -459,6 +462,7 @@ export default function App() {
             {kioskSubView === "home" && (
               <KioskHome
                 language={language}
+                onSelectLanguage={(l) => setLanguage(l)}
                 onStartWalkIn={() => setKioskSubView("walkin")}
                 onViewQueue={() => setCurrentMode("tv-display")}
                 onUpdateRecords={() => setShowUpdateRecordsModal(true)}
@@ -614,7 +618,7 @@ export default function App() {
 
         {/* ROLE 4: LOBBY TV CALLING DISPLAY */}
         {currentMode === "tv-display" && (
-          <WaitingRoomDisplay queue={queue} />
+          <WaitingRoomDisplay queue={queue} language={language} />
         )}
 
         {/* ROLE 5: EHR VAULT & HL7 FHIR GATEWAY */}
@@ -649,6 +653,7 @@ export default function App() {
         <TicketPassModal
           ticket={activeTicketModal}
           onClose={() => setActiveTicketModal(null)}
+          language={language}
         />
       )}
 
@@ -673,6 +678,18 @@ export default function App() {
           onSaveUpdate={handleSavePatientUpdate}
           onClose={() => setShowUpdateRecordsModal(false)}
           language={language}
+        />
+      )}
+
+      {/* Language Selection Modal */}
+      {showLanguageModal && (
+        <LanguageSelectionModal
+          currentLanguage={language}
+          onSelectLanguage={(l) => {
+            setLanguage(l);
+            setShowLanguageModal(false);
+          }}
+          onClose={() => setShowLanguageModal(false)}
         />
       )}
     </div>

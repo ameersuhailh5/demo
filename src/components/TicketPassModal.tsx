@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { QueueItem } from "../types";
+import { QueueItem, Language } from "../types";
+import { TRANSLATIONS } from "../data/translations";
 import {
   QrCode,
   Printer,
@@ -11,12 +12,15 @@ import { playButtonTap } from "../utils/audio";
 interface TicketPassModalProps {
   ticket: QueueItem;
   onClose: () => void;
+  language?: Language;
 }
 
 export const TicketPassModal: React.FC<TicketPassModalProps> = ({
   ticket,
   onClose,
+  language = "en",
 }) => {
+  const t = TRANSLATIONS[language] || TRANSLATIONS.en;
   const [secondsRemaining, setSecondsRemaining] = useState(30);
 
   useEffect(() => {
@@ -51,9 +55,9 @@ export const TicketPassModal: React.FC<TicketPassModalProps> = ({
             <CheckCircle2 className="w-6 h-6 text-white" />
           </div>
           <span className="text-[10px] font-bold tracking-wider uppercase opacity-90">
-            Check-In Confirmed
+            {t.ticketPass.confirmed}
           </span>
-          <h2 className="text-xl font-black mt-0.5">Clinic Queue Ticket</h2>
+          <h2 className="text-xl font-black mt-0.5">{t.ticketPass.title}</h2>
 
           <div className="absolute top-3 right-3 bg-black/20 text-white text-[10px] font-mono px-2 py-0.5 rounded-full">
             {secondsRemaining}s
@@ -67,7 +71,7 @@ export const TicketPassModal: React.FC<TicketPassModalProps> = ({
             style={{ borderColor: "#96D7C6" }}
           >
             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
-              Ticket Number
+              {t.ticketPass.ticketNumber}
             </span>
             <span
               className="text-4xl font-black tracking-tight font-mono block my-0.5"
@@ -76,24 +80,20 @@ export const TicketPassModal: React.FC<TicketPassModalProps> = ({
               {ticket.ticketNumber}
             </span>
             <span className="text-[11px] text-slate-600">
-              Est. Wait:{" "}
+              {t.walkin.estimatedWait}:{" "}
               <strong className="text-slate-900">
-                ~{ticket.estimatedWaitMinutes} min
+                ~{ticket.estimatedWaitMinutes} {t.common.mins}
               </strong>
             </span>
           </div>
 
           <div className="space-y-1.5 text-xs text-slate-700 border-t border-b border-slate-100 py-2.5">
             <div className="flex justify-between">
-              <span className="text-slate-500">Patient:</span>
+              <span className="text-slate-500">{t.ticketPass.patient}:</span>
               <span className="font-bold text-slate-900">{ticket.patientName}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-slate-500">MRN:</span>
-              <span className="font-mono text-slate-800">{ticket.mrn}</span>
-            </div>
             <div className="flex justify-between items-center">
-              <span className="text-slate-500">Treatment:</span>
+              <span className="text-slate-500">{t.ticketPass.treatmentModality}:</span>
               <span
                 className="font-bold px-2 py-0.5 rounded-full text-[11px] border"
                 style={{
@@ -102,15 +102,15 @@ export const TicketPassModal: React.FC<TicketPassModalProps> = ({
                   borderColor: ticket.treatmentType === "ayurveda" ? "#a7f3d0" : "#99f6e4",
                 }}
               >
-                {ticket.treatmentType === "ayurveda" ? "🌿 Ayurvedic Medicine" : "💊 Allopathic Medicine"}
+                {ticket.treatmentType === "ayurveda" ? "🌿 " + t.common.ayurveda : "💊 " + t.common.allopathy}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-500">Provider:</span>
-              <span className="font-medium text-slate-900">{ticket.doctorName}</span>
+              <span className="text-slate-500">{t.ticketPass.doctor}:</span>
+              <span className="font-medium text-slate-900">{ticket.assignedDoctor || ticket.doctorName || "Duty Physician"}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-500">Room:</span>
+              <span className="text-slate-500">{t.ticketPass.room}:</span>
               <span className="font-bold" style={{ color: "#5AA7A7" }}>
                 {ticket.assignedRoom}
               </span>
@@ -127,10 +127,10 @@ export const TicketPassModal: React.FC<TicketPassModalProps> = ({
             </div>
             <div className="text-xs text-slate-600">
               <p className="font-bold text-slate-800">
-                Lobby Calling Display
+                {t.queue.title}
               </p>
               <p className="text-[11px] text-slate-500">
-                Please take a seat. Your number will appear on the lobby monitor.
+                {t.ticketPass.keepSafeNotice}
               </p>
             </div>
           </div>
@@ -142,7 +142,7 @@ export const TicketPassModal: React.FC<TicketPassModalProps> = ({
               className="flex-1 py-2.5 px-3 rounded-xl border border-slate-300 hover:bg-slate-50 font-semibold text-slate-700 text-xs flex items-center justify-center gap-1.5 transition-colors"
             >
               <Printer className="w-3.5 h-3.5" />
-              <span>Print</span>
+              <span>{t.ticketPass.printPass}</span>
             </button>
             <button
               id="btn-finish-kiosk-session"
@@ -150,7 +150,7 @@ export const TicketPassModal: React.FC<TicketPassModalProps> = ({
               className="flex-1 py-2.5 px-3 rounded-xl text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition-colors"
               style={{ backgroundColor: "#5AA7A7" }}
             >
-              <span>Done</span>
+              <span>{t.ticketPass.done}</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>

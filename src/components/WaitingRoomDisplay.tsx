@@ -1,5 +1,6 @@
 import React from "react";
-import { QueueItem } from "../types";
+import { QueueItem, Language } from "../types";
+import { TRANSLATIONS } from "../data/translations";
 import {
   Bell,
   Clock,
@@ -11,11 +12,14 @@ import { playClinicChime } from "../utils/audio";
 
 interface WaitingRoomDisplayProps {
   queue: QueueItem[];
+  language?: Language;
 }
 
 export const WaitingRoomDisplay: React.FC<WaitingRoomDisplayProps> = ({
   queue,
+  language = "en",
 }) => {
+  const t = TRANSLATIONS[language] || TRANSLATIONS.en;
   const calledItems = queue.filter((q) => q.status === "called");
   const waitingItems = queue.filter((q) => q.status === "waiting");
   const inConsultItems = queue.filter((q) => q.status === "in_consultation");
@@ -38,10 +42,10 @@ export const WaitingRoomDisplay: React.FC<WaitingRoomDisplayProps> = ({
             </div>
             <div>
               <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
-                Waiting Room Calling Board
+                {t.queue.title}
               </h1>
               <p className="text-xs text-slate-400">
-                Watch for your ticket number.
+                {t.queue.subtitle}
               </p>
             </div>
           </div>
@@ -49,10 +53,10 @@ export const WaitingRoomDisplay: React.FC<WaitingRoomDisplayProps> = ({
           <div className="flex items-center gap-3 text-xs text-slate-400 mt-2 sm:mt-0">
             <button
               onClick={() => playClinicChime()}
-              className="flex items-center gap-1.5 bg-slate-900 border border-slate-700 px-2.5 py-1 rounded-lg text-slate-300 transition-colors"
+              className="flex items-center gap-1.5 bg-slate-900 border border-slate-700 px-2.5 py-1 rounded-lg text-slate-300 transition-colors cursor-pointer"
             >
               <Volume2 className="w-3.5 h-3.5" style={{ color: "#5AA7A7" }} />
-              <span>Chime</span>
+              <span>{t.header.chime}</span>
             </button>
             <div
               className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-mono font-bold text-xs border"
@@ -80,17 +84,17 @@ export const WaitingRoomDisplay: React.FC<WaitingRoomDisplayProps> = ({
               style={{ color: "#E2D36B" }}
             >
               <Bell className="w-3.5 h-3.5 animate-bounce" />
-              <span>Now Calling</span>
+              <span>{t.queue.nowCalling}</span>
             </div>
 
             {calledItems.length === 0 ? (
               <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-8 text-center">
                 <Clock className="w-8 h-8 text-slate-600 mx-auto mb-2" />
                 <h3 className="text-base font-bold text-slate-400">
-                  No Tickets Active
+                  {language === "ml" ? "ടിക്കറ്റുകൾ ഒന്നുമില്ല" : language === "hi" ? "कोई सक्रिय टोकन नहीं" : "No Tickets Active"}
                 </h3>
                 <p className="text-xs text-slate-500 mt-1">
-                  Called tickets appear here with chime notification.
+                  {language === "ml" ? "വിളിക്കുന്ന ടിക്കറ്റുകൾ ശബ്ദ സന്ദേശത്തോടെ ഇവിടെ കാണാം." : language === "hi" ? "बुलाए गए टोकन ध्वनि सूचना के साथ यहां प्रदर्शित होंगे।" : "Called tickets appear here with chime notification."}
                 </p>
               </div>
             ) : (
@@ -110,19 +114,19 @@ export const WaitingRoomDisplay: React.FC<WaitingRoomDisplayProps> = ({
                           className="text-[11px] font-bold uppercase tracking-wider block mb-0.5"
                           style={{ color: "#E2D36B" }}
                         >
-                          Ticket Called:
+                          {t.queue.nowCalling}:
                         </span>
                         <div className="text-5xl sm:text-6xl font-black font-mono text-white tracking-tight">
                           {item.ticketNumber}
                         </div>
                         <div className="text-xs font-medium text-slate-300 mt-1">
-                          Patient: {item.patientName.split(" ")[0]} {item.patientName.split(" ")[1]?.[0] || ""}.
+                          {t.ticketPass.patient}: {item.patientName.split(" ")[0]} {item.patientName.split(" ")[1]?.[0] || ""}.
                         </div>
                       </div>
 
                       <div className="bg-slate-900/90 border border-slate-700 rounded-xl p-4 text-right sm:min-w-[200px]">
                         <span className="text-[11px] text-slate-400 block mb-0.5">
-                          Proceed to:
+                          {language === "ml" ? "മുറിയിലേക്ക് പോവുക:" : language === "hi" ? "कृपया यहां जाएं:" : "Proceed to:"}
                         </span>
                         <div
                           className="text-xl sm:text-2xl font-black"
@@ -131,7 +135,7 @@ export const WaitingRoomDisplay: React.FC<WaitingRoomDisplayProps> = ({
                           {item.assignedRoom}
                         </div>
                         <div className="text-xs text-slate-300 mt-0.5">
-                          {item.doctorName}
+                          {item.doctorName || item.assignedDoctor}
                         </div>
                       </div>
                     </div>
@@ -144,7 +148,7 @@ export const WaitingRoomDisplay: React.FC<WaitingRoomDisplayProps> = ({
             {inConsultItems.length > 0 && (
               <div className="pt-2">
                 <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">
-                  In Exam Rooms:
+                  {t.queue.inConsultation}:
                 </span>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {inConsultItems.map((item) => (
@@ -167,17 +171,17 @@ export const WaitingRoomDisplay: React.FC<WaitingRoomDisplayProps> = ({
           <div className="lg:col-span-5 space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-slate-300 text-xs font-bold uppercase tracking-wider">
-                Next in Queue
+                {t.queue.waitingPatients}
               </span>
               <span className="text-xs text-slate-500">
-                {waitingItems.length} waiting
+                {waitingItems.length} {t.kioskHome.waitingCountSuffix}
               </span>
             </div>
 
             <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-3.5 divide-y divide-slate-800">
               {waitingItems.length === 0 ? (
                 <div className="py-6 text-center text-slate-500 text-xs">
-                  No additional patients waiting.
+                  {language === "ml" ? "കാത്തിരിക്കുന്ന രോഗികൾ ഇല്ല." : language === "hi" ? "कोई अन्य मरीज प्रतीक्षा में नहीं है।" : "No additional patients waiting."}
                 </div>
               ) : (
                 waitingItems.map((item, index) => (
@@ -204,7 +208,7 @@ export const WaitingRoomDisplay: React.FC<WaitingRoomDisplayProps> = ({
 
                     <div className="text-right">
                       <span className="text-xs font-semibold text-slate-300 block">
-                        ~{item.estimatedWaitMinutes} min
+                        ~{item.estimatedWaitMinutes} {t.common.mins}
                       </span>
                     </div>
                   </div>
@@ -215,7 +219,7 @@ export const WaitingRoomDisplay: React.FC<WaitingRoomDisplayProps> = ({
             <div className="bg-slate-900/40 border border-slate-800 p-3 rounded-xl flex items-start gap-2.5 text-xs text-slate-400">
               <Info className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: "#5AA7A7" }} />
               <span>
-                Need assistance? Please alert staff at the front desk.
+                {t.common.staffAssistance}
               </span>
             </div>
           </div>
@@ -231,7 +235,7 @@ export const WaitingRoomDisplay: React.FC<WaitingRoomDisplayProps> = ({
           >
             INFO
           </span>
-          <span>Flu vaccines and booster shots available at desk today.</span>
+          <span>{t.common.emergencyWarning}</span>
         </div>
         <div className="font-mono text-slate-500 text-[10px]">
           Lobby Screen Feed

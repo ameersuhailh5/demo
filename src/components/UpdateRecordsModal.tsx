@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { PatientRecord, Language } from "../types";
+import { TRANSLATIONS } from "../data/translations";
 import {
   X,
   Camera,
@@ -19,7 +20,9 @@ export const UpdateRecordsModal: React.FC<UpdateRecordsModalProps> = ({
   patients,
   onSaveUpdate,
   onClose,
+  language,
 }) => {
+  const t = TRANSLATIONS[language] || TRANSLATIONS.en;
   const [selectedPatientId, setSelectedPatientId] = useState(patients[0]?.id || "");
   const selectedPatient = patients.find((p) => p.id === selectedPatientId) || patients[0];
 
@@ -87,9 +90,9 @@ export const UpdateRecordsModal: React.FC<UpdateRecordsModalProps> = ({
               <FileText className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-sm font-bold">Update Records</h3>
+              <h3 className="text-sm font-bold">{t.records.title}</h3>
               <p className="text-[10px] text-slate-400">
-                Insurance & Allergies
+                {t.records.subtitle}
               </p>
             </div>
           </div>
@@ -111,17 +114,14 @@ export const UpdateRecordsModal: React.FC<UpdateRecordsModalProps> = ({
                 <CheckCircle2 className="w-7 h-7" />
               </div>
               <h4 className="text-base font-bold text-slate-900">
-                Records Updated
+                {t.records.savedSuccess}
               </h4>
-              <p className="text-slate-500 text-xs">
-                Changes saved to patient health record.
-              </p>
             </div>
           ) : (
             <>
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Patient Record:
+                  {t.records.selectPatient}:
                 </label>
                 <select
                   value={selectedPatientId}
@@ -143,7 +143,7 @@ export const UpdateRecordsModal: React.FC<UpdateRecordsModalProps> = ({
                     className="flex items-center justify-between p-1.5 rounded-lg text-xs font-semibold"
                     style={{ backgroundColor: "#f0fdf4", color: "#166534" }}
                   >
-                    <span>Card front scanned</span>
+                    <span>{t.walkin.cardScanned}</span>
                     <button
                       type="button"
                       onClick={() => setCardScanned(false)}
@@ -166,7 +166,7 @@ export const UpdateRecordsModal: React.FC<UpdateRecordsModalProps> = ({
                       className="mt-1 text-slate-900 font-bold px-3 py-1 rounded-lg text-xs"
                       style={{ backgroundColor: "#96D7C6" }}
                     >
-                      Scan Card
+                      {t.records.scanCard}
                     </button>
                   </div>
                 )}
@@ -175,7 +175,7 @@ export const UpdateRecordsModal: React.FC<UpdateRecordsModalProps> = ({
               <div className="grid grid-cols-2 gap-2.5">
                 <div>
                   <label className="block text-slate-600 font-bold mb-1 text-[11px]">
-                    Insurance
+                    {t.records.provider}
                   </label>
                   <input
                     type="text"
@@ -186,7 +186,7 @@ export const UpdateRecordsModal: React.FC<UpdateRecordsModalProps> = ({
                 </div>
                 <div>
                   <label className="block text-slate-600 font-bold mb-1 text-[11px]">
-                    Policy ID
+                    {t.records.policyNumber}
                   </label>
                   <input
                     type="text"
@@ -199,7 +199,7 @@ export const UpdateRecordsModal: React.FC<UpdateRecordsModalProps> = ({
 
               <div>
                 <label className="block text-slate-600 font-bold mb-1 text-[11px]">
-                  Phone
+                  {t.records.updatePhone}
                 </label>
                 <input
                   type="tel"
@@ -211,7 +211,7 @@ export const UpdateRecordsModal: React.FC<UpdateRecordsModalProps> = ({
 
               <div>
                 <label className="block text-slate-600 font-bold mb-1 text-[11px]">
-                  Allergies
+                  {t.records.allergies}
                 </label>
                 <input
                   type="text"
@@ -228,7 +228,7 @@ export const UpdateRecordsModal: React.FC<UpdateRecordsModalProps> = ({
                   onClick={onClose}
                   className="px-3 py-1.5 text-slate-600 text-xs font-semibold hover:bg-slate-100 rounded-xl"
                 >
-                  Cancel
+                  {t.common.cancel}
                 </button>
                 <button
                   id="btn-save-record-updates"
@@ -237,7 +237,7 @@ export const UpdateRecordsModal: React.FC<UpdateRecordsModalProps> = ({
                   className="text-white font-bold px-4 py-2 rounded-xl text-xs shadow-xs"
                   style={{ backgroundColor: "#5AA7A7" }}
                 >
-                  Save Updates
+                  {t.records.saveChanges}
                 </button>
               </div>
             </>

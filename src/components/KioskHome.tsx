@@ -1,5 +1,6 @@
 import React from "react";
 import { Language } from "../types";
+import { TRANSLATIONS } from "../data/translations";
 import {
   UserPlus,
   Clock,
@@ -9,12 +10,14 @@ import {
   Sparkles,
   Leaf,
   Pill,
-  Activity,
-  HeartPulse,
+  Globe2,
+  Check,
 } from "lucide-react";
+import { playButtonTap } from "../utils/audio";
 
 interface KioskHomeProps {
   language: Language;
+  onSelectLanguage: (lang: Language) => void;
   onStartWalkIn: () => void;
   onViewQueue: () => void;
   onUpdateRecords: () => void;
@@ -24,53 +27,107 @@ interface KioskHomeProps {
 
 export const KioskHome: React.FC<KioskHomeProps> = ({
   language,
+  onSelectLanguage,
   onStartWalkIn,
   onViewQueue,
   onUpdateRecords,
   waitingCount,
   averageWaitMinutes,
 }) => {
-  const content = {
-    en: {
-      welcome: "MetroHealth Clinic Registration",
-      subtitle: "Welcome to our self-service intake kiosk. Please begin your walk-in registration below.",
-      walkinTitle: "Walk-In Patient Registration",
-      walkinDesc: "Express symptom intake & clinical triage. Choose between Allopathy and Ayurvedic care systems.",
-      walkinBadge: "Direct Care Intake",
-      queueTitle: "Live Waiting Room Queue",
-      queueDesc: "View currently called tickets, active rooms, and estimated wait times.",
-      recordsTitle: "Update Records & Insurance",
-      recordsDesc: "Scan insurance cards, verify policy coverage, and update contact details.",
-      hipaaBadge: "HIPAA Compliant & HL7 FHIR R4 Encrypted",
-    },
-    es: {
-      welcome: "Registro MetroHealth Clinic",
-      subtitle: "Bienvenido al quiosco de recepción. Inicie su registro de paciente a continuación.",
-      walkinTitle: "Registro de Paciente Sin Cita",
-      walkinDesc: "Evaluación inicial y triaje clínico. Elija entre medicina Alopática o Ayurvédica.",
-      walkinBadge: "Ingreso Directo",
-      queueTitle: "Fila de Espera en Vivo",
-      queueDesc: "Consulte tickets llamados, salas de consulta y tiempo de espera estimado.",
-      recordsTitle: "Actualizar Expediente y Seguro",
-      recordsDesc: "Escanee su tarjeta de seguro y actualice sus datos de contacto.",
-      hipaaBadge: "Conforme a HIPAA y Cifrado FHIR R4",
-    },
-    zh: {
-      welcome: "美普健康诊所 自助就医登记",
-      subtitle: "欢迎使用自助分诊终端。请在下方开始您的现场登记：",
-      walkinTitle: "现场门诊患者登记",
-      walkinDesc: "快速录入症状并进行分诊。支持现代常规诊疗（西医）与传统阿育吠陀疗法。",
-      walkinBadge: "现场快速登记",
-      queueTitle: "实时候诊排队大屏",
-      queueDesc: "查看当前呼叫号码、各科诊室与预计候诊时长。",
-      recordsTitle: "更新医保与档案",
-      recordsDesc: "扫描医保卡，核实参保信息与更新紧急联系电话。",
-      hipaaBadge: "符合HIPAA规范与HL7 FHIR R4加密标准",
-    },
-  }[language];
+  const t = TRANSLATIONS[language] || TRANSLATIONS.en;
+
+  const languageOptions: Array<{
+    id: Language;
+    name: string;
+    nativeName: string;
+    flagDesc: string;
+  }> = [
+    { id: "en", name: "English", nativeName: "English", flagDesc: "Primary" },
+    { id: "ml", name: "Malayalam", nativeName: "മലയാളം", flagDesc: "കേരളം" },
+    { id: "hi", name: "Hindi", nativeName: "हिन्दी", flagDesc: "भारत" },
+  ];
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-6 sm:py-10">
+    <div className="max-w-4xl mx-auto px-4 py-6 sm:py-8">
+      {/* Prominent Language Selection Bar / Banner */}
+      <div className="mb-8 bg-white border border-slate-200 shadow-sm rounded-3xl p-4 sm:p-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3 pb-3 border-b border-slate-100">
+          <div className="flex items-center gap-2.5">
+            <div
+              className="w-8 h-8 rounded-xl flex items-center justify-center text-white"
+              style={{ backgroundColor: "#5AA7A7" }}
+            >
+              <Globe2 className="w-4 h-4" />
+            </div>
+            <div>
+              <span className="text-xs font-bold text-slate-800 uppercase tracking-wide block">
+                {t.kioskHome.selectLanguagePrompt}
+              </span>
+              <span className="text-[11px] text-slate-500">
+                Touch a language below to change the whole application
+              </span>
+            </div>
+          </div>
+          <span
+            className="text-[11px] font-bold px-2.5 py-0.5 rounded-full self-start sm:self-auto"
+            style={{ backgroundColor: "#f0fdf9", color: "#5AA7A7" }}
+          >
+            Active: {language === "en" ? "English" : language === "ml" ? "മലയാളം" : "हिन्दी"}
+          </span>
+        </div>
+
+        {/* 3 Large Touch-Friendly Language Buttons */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {languageOptions.map((opt) => {
+            const isSelected = language === opt.id;
+            return (
+              <button
+                key={opt.id}
+                id={`btn-home-lang-${opt.id}`}
+                onClick={() => {
+                  playButtonTap();
+                  onSelectLanguage(opt.id);
+                }}
+                className={`flex items-center justify-between p-3.5 rounded-2xl border-2 transition-all cursor-pointer text-left group transform hover:-translate-y-0.5 active:translate-y-0 ${
+                  isSelected
+                    ? "bg-teal-50/80 border-teal-600 shadow-sm ring-2 ring-teal-500/20"
+                    : "bg-slate-50 border-slate-200 hover:border-teal-300 hover:bg-white"
+                }`}
+              >
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-base font-black text-slate-900">
+                      {opt.nativeName}
+                    </span>
+                    {opt.nativeName !== opt.name && (
+                      <span className="text-xs text-slate-500 font-semibold">
+                        ({opt.name})
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-[11px] text-slate-500 font-medium block mt-0.5">
+                    {opt.flagDesc}
+                  </span>
+                </div>
+
+                <div
+                  className={`w-6 h-6 rounded-full flex items-center justify-center transition-colors ${
+                    isSelected
+                      ? "text-white shadow-xs"
+                      : "border border-slate-300 group-hover:border-teal-500"
+                  }`}
+                  style={{
+                    backgroundColor: isSelected ? "#5AA7A7" : undefined,
+                  }}
+                >
+                  {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Header Banner */}
       <div className="text-center mb-8 sm:mb-10">
         <div
@@ -85,10 +142,10 @@ export const KioskHome: React.FC<KioskHomeProps> = ({
           <span>Intelligent Care Routing • Allopathy & Ayurveda</span>
         </div>
         <h1 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
-          {content.welcome}
+          {t.kioskHome.welcome}
         </h1>
         <p className="mt-2 text-sm sm:text-base text-slate-600 max-w-xl mx-auto">
-          {content.subtitle}
+          {t.kioskHome.subtitle}
         </p>
 
         {/* Live Clinic Stats Pill */}
@@ -99,14 +156,14 @@ export const KioskHome: React.FC<KioskHomeProps> = ({
               style={{ backgroundColor: "#BAC94A" }}
             ></span>
             <span>
-              <strong>{waitingCount}</strong> waiting in lobby
+              <strong>{waitingCount}</strong> {t.kioskHome.waitingCountSuffix}
             </span>
           </div>
           <span className="text-slate-300">|</span>
           <div className="flex items-center gap-2">
             <Clock className="w-4 h-4" style={{ color: "#5AA7A7" }} />
             <span>
-              Avg. wait: <strong>{averageWaitMinutes} mins</strong>
+              {t.kioskHome.avgWait}: <strong>{averageWaitMinutes} {t.common.mins}</strong>
             </span>
           </div>
         </div>
@@ -137,7 +194,7 @@ export const KioskHome: React.FC<KioskHomeProps> = ({
                     className="text-slate-900 text-xs font-black px-3 py-1 rounded-full shadow-xs uppercase tracking-wide inline-block"
                     style={{ backgroundColor: "#BAC94A" }}
                   >
-                    {content.walkinBadge}
+                    {t.kioskHome.walkinBadge}
                   </span>
                   <div className="text-teal-100 text-xs mt-0.5 font-medium">
                     Self-Service Arrival & Rapid Triage
@@ -146,21 +203,21 @@ export const KioskHome: React.FC<KioskHomeProps> = ({
               </div>
 
               <h2 className="text-2xl sm:text-3xl font-black text-white mb-2 tracking-tight">
-                {content.walkinTitle}
+                {t.kioskHome.walkinTitle}
               </h2>
               <p className="text-teal-50 text-sm sm:text-base leading-relaxed mb-4">
-                {content.walkinDesc}
+                {t.kioskHome.walkinDesc}
               </p>
 
               {/* Supported Modalities Pill Indicator */}
               <div className="flex flex-wrap items-center gap-2 text-xs">
                 <span className="inline-flex items-center gap-1 bg-white/20 backdrop-blur-xs px-2.5 py-1 rounded-lg text-white font-semibold">
                   <Pill className="w-3.5 h-3.5 text-teal-200" />
-                  <span>Allopathy (Conventional Care)</span>
+                  <span>{t.common.allopathy}</span>
                 </span>
                 <span className="inline-flex items-center gap-1 bg-white/20 backdrop-blur-xs px-2.5 py-1 rounded-lg text-white font-semibold">
                   <Leaf className="w-3.5 h-3.5 text-emerald-200" />
-                  <span>Ayurvedic Medicine & Panchakarma</span>
+                  <span>{t.common.ayurveda}</span>
                 </span>
               </div>
             </div>
@@ -173,7 +230,7 @@ export const KioskHome: React.FC<KioskHomeProps> = ({
                 <ChevronRight className="w-7 h-7" />
               </div>
               <span className="text-xs font-bold text-white tracking-wide">
-                Touch to Begin
+                {t.common.touchToBegin}
               </span>
             </div>
           </div>
@@ -205,9 +262,9 @@ export const KioskHome: React.FC<KioskHomeProps> = ({
               </span>
             </div>
             <h3 className="text-lg font-bold text-slate-900 mb-1">
-              {content.queueTitle}
+              {t.kioskHome.queueTitle}
             </h3>
-            <p className="text-slate-600 text-xs leading-relaxed">{content.queueDesc}</p>
+            <p className="text-slate-600 text-xs leading-relaxed">{t.kioskHome.queueDesc}</p>
           </div>
 
           <div
@@ -242,16 +299,16 @@ export const KioskHome: React.FC<KioskHomeProps> = ({
               </span>
             </div>
             <h3 className="text-lg font-bold text-slate-900 mb-1">
-              {content.recordsTitle}
+              {t.kioskHome.recordsTitle}
             </h3>
-            <p className="text-slate-600 text-xs leading-relaxed">{content.recordsDesc}</p>
+            <p className="text-slate-600 text-xs leading-relaxed">{t.kioskHome.recordsDesc}</p>
           </div>
 
           <div
             className="mt-5 flex items-center justify-between text-xs font-bold pt-3 border-t border-slate-100"
             style={{ color: "#6C8CBF" }}
           >
-            <span>Update Information</span>
+            <span>{t.records.title}</span>
             <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </div>
         </button>
@@ -261,12 +318,12 @@ export const KioskHome: React.FC<KioskHomeProps> = ({
       <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 border-t border-slate-200 pt-5">
         <div className="flex items-center gap-2">
           <Shield className="w-4 h-4" style={{ color: "#5AA7A7" }} />
-          <span>{content.hipaaBadge}</span>
+          <span>{t.kioskHome.hipaaBadge}</span>
         </div>
         <div className="flex items-center gap-4 text-slate-400">
-          <span>Kiosk Station #04</span>
+          <span>{t.common.kioskStation}</span>
           <span>•</span>
-          <span>Staff Assistance: Reception Desk</span>
+          <span>{t.common.staffAssistance}</span>
         </div>
       </div>
     </div>

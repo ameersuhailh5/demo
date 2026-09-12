@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { AppMode, Language, AuthUser, StaffRole } from "../types";
+import { TRANSLATIONS } from "../data/translations";
 import {
   Activity,
   Tv,
@@ -16,6 +17,7 @@ import {
   Unlock,
   LogOut,
   ShieldCheck,
+  Globe2,
 } from "lucide-react";
 
 interface HeaderProps {
@@ -30,6 +32,7 @@ interface HeaderProps {
   activeWaitingCount: number;
   authUser?: AuthUser | null;
   onSignOut?: () => void;
+  onOpenLanguageModal?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -44,7 +47,9 @@ export const Header: React.FC<HeaderProps> = ({
   activeWaitingCount,
   authUser,
   onSignOut,
+  onOpenLanguageModal,
 }) => {
+  const t = TRANSLATIONS[language] || TRANSLATIONS.en;
   const [currentTime, setCurrentTime] = useState("");
 
   useEffect(() => {
@@ -64,10 +69,10 @@ export const Header: React.FC<HeaderProps> = ({
       {/* Top Clinical & Tech Status Bar */}
       <div className="bg-slate-900 text-slate-300 text-xs px-4 py-1.5 flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-3">
-          {/* Python & React stack badge */}
+          {/* Stack badge */}
           <span className="flex items-center gap-1.5 font-medium text-[11px]" style={{ color: "#96D7C6" }}>
             <Terminal className="w-3.5 h-3.5" style={{ color: "#BAC94A" }} />
-            <span>Python & React Core</span>
+            <span>Java & React Core</span>
           </span>
 
           <span className="text-slate-600 hidden sm:inline">|</span>
@@ -83,7 +88,7 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Emergency Alert */}
           <div className="flex items-center gap-1 text-[11px]" style={{ color: "#E2D36B" }}>
             <AlertTriangle className="w-3.5 h-3.5" />
-            <span className="hidden md:inline">Emergency: Alert staff or call 911</span>
+            <span className="hidden md:inline">{t.header.emergency}</span>
           </div>
 
           <span className="text-slate-600">|</span>
@@ -92,7 +97,7 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             id="btn-toggle-sound"
             onClick={onToggleSound}
-            className="flex items-center gap-1 text-slate-300 hover:text-white transition-colors"
+            className="flex items-center gap-1 text-slate-300 hover:text-white transition-colors cursor-pointer"
             title={soundEnabled ? "Mute chimes" : "Enable chimes"}
           >
             {soundEnabled ? (
@@ -100,35 +105,35 @@ export const Header: React.FC<HeaderProps> = ({
             ) : (
               <VolumeX className="w-3.5 h-3.5 text-slate-400" />
             )}
-            <span className="text-[11px]">{soundEnabled ? "Chime" : "Muted"}</span>
+            <span className="text-[11px]">{soundEnabled ? t.header.chime : t.header.muted}</span>
           </button>
 
           {/* Large text toggle */}
           <button
             id="btn-toggle-large-font"
             onClick={onToggleFontSize}
-            className="px-1.5 py-0.5 rounded text-[11px] font-semibold transition-colors text-white"
+            className="px-1.5 py-0.5 rounded text-[11px] font-semibold transition-colors text-white cursor-pointer"
             style={{
               backgroundColor: fontSizeLarge ? "#5AA7A7" : "#1e293b",
             }}
             title="Toggle text size"
           >
-            A+ Font
+            {t.header.fontSize}
           </button>
 
-          {/* Language selector */}
-          <div className="flex items-center gap-1 bg-slate-800 px-2 py-0.5 rounded">
-            <Languages className="w-3 h-3 text-slate-400" />
+          {/* Language selector Button / Dropdown */}
+          <div className="flex items-center gap-1 bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
+            <Globe2 className="w-3 h-3 text-teal-300" />
             <select
               id="select-kiosk-language"
               value={language}
               onChange={(e) => onSelectLanguage(e.target.value as Language)}
               aria-label="Select Language"
-              className="bg-transparent text-slate-200 text-xs focus:outline-none cursor-pointer"
+              className="bg-transparent text-slate-200 text-xs focus:outline-none cursor-pointer font-medium"
             >
               <option value="en" className="bg-slate-900 text-white">English</option>
-              <option value="es" className="bg-slate-900 text-white">Español</option>
-              <option value="zh" className="bg-slate-900 text-white">中文</option>
+              <option value="ml" className="bg-slate-900 text-white">മലയാളം (Malayalam)</option>
+              <option value="hi" className="bg-slate-900 text-white">हिन्दी (Hindi)</option>
             </select>
           </div>
 
@@ -158,7 +163,7 @@ export const Header: React.FC<HeaderProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-xl font-black tracking-tight text-slate-900">
-                  Medi<span style={{ color: "#5AA7A7" }}>Kiosk</span>
+                  {t.header.title}
                 </span>
                 <span
                   className="text-[10px] font-bold px-2 py-0.5 rounded-full border"
@@ -168,11 +173,11 @@ export const Header: React.FC<HeaderProps> = ({
                     borderColor: "#96D7C6",
                   }}
                 >
-                  Python & React
+                  Allopathy & Ayurveda
                 </span>
               </div>
               <p className="text-xs text-slate-500">
-                Clinic Patient Intake & Registration
+                {t.header.subtitle}
               </p>
             </div>
           </div>
@@ -192,7 +197,7 @@ export const Header: React.FC<HeaderProps> = ({
               }}
             >
               <Users className="w-3.5 h-3.5" style={{ color: "#5AA7A7" }} />
-              <span>Patient Kiosk</span>
+              <span>{t.header.patientKiosk}</span>
             </button>
 
             <button
@@ -208,7 +213,7 @@ export const Header: React.FC<HeaderProps> = ({
               }}
             >
               <Stethoscope className="w-3.5 h-3.5" style={{ color: "#5AA7A7" }} />
-              <span>Doctor Portal</span>
+              <span>{t.header.doctorPortal}</span>
               {authUser?.role === "doctor" ? (
                 <Unlock className="w-3 h-3 text-emerald-500 ml-0.5" />
               ) : (
@@ -229,7 +234,7 @@ export const Header: React.FC<HeaderProps> = ({
               }}
             >
               <ShieldCheck className="w-3.5 h-3.5" style={{ color: "#6C8CBF" }} />
-              <span>Admin</span>
+              <span>{t.header.adminDashboard}</span>
               {authUser?.role === "admin" ? (
                 <Unlock className="w-3 h-3 text-emerald-500 ml-0.5" />
               ) : (
@@ -258,7 +263,7 @@ export const Header: React.FC<HeaderProps> = ({
               }}
             >
               <Tv className="w-3.5 h-3.5" style={{ color: "#5AA7A7" }} />
-              <span>Lobby</span>
+              <span>{t.header.waitingLobby}</span>
             </button>
 
             <button
@@ -274,7 +279,7 @@ export const Header: React.FC<HeaderProps> = ({
               }}
             >
               <Database className="w-3.5 h-3.5" style={{ color: "#6C8CBF" }} />
-              <span>EHR</span>
+              <span>{t.header.ehrVault}</span>
             </button>
           </nav>
 

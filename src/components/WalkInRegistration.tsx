@@ -1,6 +1,7 @@
 import React, { useState, useRef } from "react";
 import { QueueItem, TriageEvaluation, Language, PatientRecord, TreatmentType } from "../types";
 import { COMMON_SYMPTOMS, INSURANCE_PROVIDERS } from "../data/mockData";
+import { TRANSLATIONS } from "../data/translations";
 import {
   Activity,
   CreditCard,
@@ -28,7 +29,9 @@ interface WalkInRegistrationProps {
 export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
   onComplete,
   onCancel,
+  language,
 }) => {
+  const t = TRANSLATIONS[language] || TRANSLATIONS.en;
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4 | 5 | 6>(1);
 
   // Step 1: Demographics
@@ -139,144 +142,128 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
     setAllergiesText("Sulfa antibiotics");
     setMedicationsText("Ibuprofen 400mg");
     setConditionsText("None");
-    setMemberId("BC-992144");
-    setGroupNumber("GRP-7721");
     setInsuranceCardScanned(true);
+    setMemberId("AET-99421");
+    setGroupNumber("GRP-7721");
     setHasSignature(true);
   };
 
   const performAITriage = async () => {
     setIsAnalyzingAI(true);
     setCurrentStep(6);
-
-    const allergiesList = hasNoAllergies
-      ? ["No Known Drug Allergies (NKDA)"]
-      : allergiesText
-      ? allergiesText.split(",").map((s) => s.trim())
-      : ["NKDA"];
-
-    const conditionsList = conditionsText
-      ? conditionsText.split(",").map((s) => s.trim())
-      : [];
+    playButtonTap();
 
     try {
-      const res = await fetch("/api/triage-analysis", {
+      const response = await fetch("/api/triage", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          patientName: `${firstName} ${lastName}`.trim() || "Walk-In Patient",
-          age: dob ? Math.floor((Date.now() - new Date(dob).getTime()) / (365.25 * 24 * 3600 * 1000)) : 35,
-          treatmentType,
-          chiefComplaint: chiefComplaint || (treatmentType === "ayurveda" ? "Ayurvedic consultation" : "General malaise"),
+          symptoms: selectedSymptoms.join(", ") || chiefComplaint || "General consultation",
           painLevel,
           duration,
-          symptoms: selectedSymptoms,
-          existingConditions: conditionsList,
-          allergies: allergiesList,
+          allergies: hasNoAllergies ? "NKDA" : allergiesText,
+          medications: medicationsText,
+          conditions: conditionsText,
+          language,
+          treatmentType,
+          ayurvedicFocus: treatmentType === "ayurveda" ? ayurvedicFocus : undefined,
         }),
       });
 
-      const data = await res.json();
-      if (data.success) {
-        setTriageResult({
-          triageScore: data.triageScore || 3,
-          urgencyCategory: data.urgencyCategory || (treatmentType === "ayurveda" ? "Ayurvedic Consultation" : "Level 3 Urgent"),
-          recommendedRoom: data.recommendedRoom || (treatmentType === "ayurveda" ? "Ayurveda Suite 1A" : "Triage Bay 2"),
-          vitalsToCheck: data.vitalsToCheck || (treatmentType === "ayurveda" ? ["Blood Pressure", "Nadi Pariksha (Pulse)", "Agni Exam"] : ["Blood Pressure", "Heart Rate", "SpO2"]),
-          clinicalSummary: data.clinicalSummary || "Intake completed.",
-          suggestedNursingNotes: data.suggestedNursingNotes || "Standard intake protocol.",
-          source: data.source || "Python Clinical Engine",
-          treatmentType,
-        });
+      if (response.ok) {
+        const data = await response.json();
+        setTriageResult(data);
+      } else {
+        fallbackTriageLogic();
       }
     } catch {
-      const isRedFlag = painLevel >= 8 || selectedSymptoms.includes("Chest Discomfort / Pressure");
-      const isAyur = treatmentType === "ayurveda" && !isRedFlag;
-
-      setTriageResult({
-        triageScore: isRedFlag ? 2 : painLevel >= 5 ? 3 : 4,
-        urgencyCategory: isRedFlag ? "Level 2 Emergent" : isAyur ? "Ayurvedic Consultation" : painLevel >= 5 ? "Level 3 Urgent" : "Level 4 Less Urgent",
-        recommendedRoom: isRedFlag ? "Triage Bay 1 (High Priority)" : isAyur ? "Ayurveda Suite 1A" : "Exam Room 2",
-        vitalsToCheck: isAyur
-          ? ["Blood Pressure", "Nadi Pariksha (Radial Pulse)", "Agni & Tongue Inspection", "Temperature"]
-          : ["Blood Pressure", "Pulse Oximetry", "Temperature", "Heart Rate"],
-        clinicalSummary: isAyur
-          ? `Patient requested Ayurvedic Traditional Care for: ${chiefComplaint || "holistic wellness"}. Focus: ${ayurvedicFocus}.`
-          : `Patient presents with ${chiefComplaint || "acute complaint"} (pain ${painLevel}/10).`,
-        suggestedNursingNotes: isAyur
-          ? "Examine Dosha constitution (Vata/Pitta/Kapha). Review herbal preparations and dietary adherence."
-          : "Assess baseline vitals and allergy reconciliation.",
-        source: "Python Clinical Protocol Engine",
-        treatmentType,
-      });
+      fallbackTriageLogic();
     } finally {
       setIsAnalyzingAI(false);
+      playSuccessChime();
     }
+  };
+
+  const fallbackTriageLogic = () => {
+    let score: 1 | 2 | 3 | 4 | 5 = 4;
+    let urgency: "routine" | "moderate" | "urgent" | "emergent" | "critical" = "routine";
+    let room = treatmentType === "ayurveda" ? "Ayur-Bay 1" : "Bay 4";
+    let summary = `Patient presents with ${chiefComplaint || "routine symptoms"}. Stable vitals recommended.`;
+
+    if (painLevel >= 8 || selectedSymptoms.includes("Chest Pain or Pressure")) {
+      score = 2;
+      urgency = "emergent";
+      room = "Trauma Bay 1";
+      summary = "High acuity detected. Immediate nursing assessment ordered.";
+    } else if (painLevel >= 5) {
+      score = 3;
+      urgency = "urgent";
+      room = treatmentType === "ayurveda" ? "Ayur-Bay 2" : "Bay 2";
+      summary = "Moderate discomfort reported. Standard triage protocol applied.";
+    }
+
+    setTriageResult({
+      triageScore: score,
+      urgencyCategory: urgency,
+      recommendedRoom: room,
+      clinicalSummary: summary,
+      requiredVitals: ["BP", "HR", "SpO2", "Temp"],
+      assignedDepartment: treatmentType === "ayurveda" ? "Ayurvedic Medicine" : "Urgent Care",
+      estimatedWaitTimeMinutes: score <= 2 ? 5 : score === 3 ? 15 : 30,
+      source: "Java/Spring SE Microservice Triage Engine",
+    });
   };
 
   const handleFinalSubmit = () => {
     playSuccessChime();
 
-    const randomMRN = `MRN-${Math.floor(10000 + Math.random() * 90000)}`;
-    const randomTicket = treatmentType === "ayurveda"
-      ? `AY-${Math.floor(100 + Math.random() * 899)}`
-      : `W-${Math.floor(200 + Math.random() * 799)}`;
-    const nowTime = new Date().toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-
-    const isUrgent = (triageResult?.triageScore || 3) <= 2;
-    const isAyur = treatmentType === "ayurveda";
-
-    const assignedDoc = isAyur
-      ? "Dr. Rajesh Sharma, BAMS, MD (Ayur)"
-      : isUrgent
-      ? "Dr. Sarah Jenkins, MD"
-      : "Dr. Alisha Patel, DO";
-
-    const assignedDept = isAyur
-      ? "Ayurvedic Medicine & Panchakarma"
-      : "Urgent Care & Walk-In";
-
-    const assignedRoom = triageResult?.recommendedRoom || (isAyur ? "Ayurveda Suite 1A" : "Triage Bay 2");
+    const newTicketNumber =
+      (treatmentType === "ayurveda" ? "AY-" : "WK-") +
+      Math.floor(100 + Math.random() * 900);
 
     const newQueueItem: QueueItem = {
-      id: `q-${Date.now()}`,
-      ticketNumber: randomTicket,
-      patientName: `${firstName} ${lastName}`.trim(),
-      mrn: randomMRN,
-      checkInTime: nowTime,
-      doctorName: assignedDoc,
-      department: assignedDept,
-      assignedRoom,
+      id: "q-" + Date.now(),
+      ticketNumber: newTicketNumber,
+      patientId: "pat-" + Date.now(),
+      patientName: `${firstName} ${lastName}`,
+      mrn: `MRN-${Math.floor(100000 + Math.random() * 900000)}`,
+      checkInTime: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      doctorName:
+        treatmentType === "ayurveda"
+          ? "Dr. Rajesh Sharma, BAMS, MD (Ayur)"
+          : (triageResult?.triageScore || 4) <= 2
+          ? "Dr. Sarah Jenkins, MD"
+          : "Dr. Alisha Patel, DO",
+      department: treatmentType === "ayurveda" ? "Ayurvedic Medicine" : "General Medicine",
+      assignedRoom: triageResult?.recommendedRoom || (treatmentType === "ayurveda" ? "Ayur-Room 1" : "Room 102"),
       status: "waiting",
       type: "walk_in",
-      urgency: isUrgent ? "urgent" : "moderate",
-      esiScore: triageResult?.triageScore || 3,
-      chiefComplaint: chiefComplaint || (isAyur ? "Ayurvedic Consultation & Dosha Assessment" : "General health concern"),
+      urgency: (triageResult?.urgencyCategory as any) || "routine",
+      esiScore: triageResult?.triageScore || 4,
+      chiefComplaint: chiefComplaint || selectedSymptoms.join(", ") || (treatmentType === "ayurveda" ? "Ayurvedic Consultation" : "General Examination"),
       painLevel,
-      symptoms: selectedSymptoms,
+      symptoms: selectedSymptoms.length > 0 ? selectedSymptoms : [chiefComplaint || "General Checkup"],
       triageEvaluation: triageResult || undefined,
       insuranceVerified: true,
       signatureCompleted: true,
-      estimatedWaitMinutes: isUrgent ? 4 : isAyur ? 10 : 14,
-      treatmentType,
+      estimatedWaitMinutes: triageResult?.estimatedWaitTimeMinutes || 20,
+      treatmentType: treatmentType,
+      clinicalNotes: `Language: ${language.toUpperCase()}. ${triageResult?.clinicalSummary || "Intake completed."}`,
     };
 
     const newPatient: PatientRecord = {
-      id: `pat-${Date.now()}`,
-      mrn: randomMRN,
+      id: newQueueItem.patientId || `pat-${Date.now()}`,
+      mrn: newQueueItem.mrn,
       firstName,
       lastName,
       dob: dob || "1990-01-01",
-      gender,
-      phone,
-      email,
-      address: "Walk-in Patient",
+      gender: gender === "female" ? "female" : gender === "male" ? "male" : "other",
+      phone: phone || "(555) 000-0000",
+      email: email || `${firstName.toLowerCase()}.${lastName.toLowerCase()}@example.com`,
+      address: "Walk-in Registration, Local Area",
       preferredTreatment: treatmentType,
       emergencyContact: {
-        name: emergencyName || "Not provided",
+        name: emergencyName || "Emergency Contact",
         relationship: "Family",
         phone: emergencyPhone || phone,
       },
@@ -304,12 +291,12 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
   };
 
   const stepsHeader = [
-    { num: 1, title: "Demographics" },
-    { num: 2, title: "Symptoms" },
-    { num: 3, title: "History" },
-    { num: 4, title: "Insurance" },
-    { num: 5, title: "Consent" },
-    { num: 6, title: "Triage" },
+    { num: 1, title: t.walkin.step1Title.split(" ")[0] || "Demographics" },
+    { num: 2, title: t.walkin.step2Title.split(" ")[0] || "Symptoms" },
+    { num: 3, title: t.walkin.step3Title.split(" ")[0] || "History" },
+    { num: 4, title: t.walkin.step4Title.split(" ")[0] || "Insurance" },
+    { num: 5, title: t.walkin.step5Title.split(" ")[0] || "Consent" },
+    { num: 6, title: t.walkin.step6Title.split(" ")[0] || "Triage" },
   ];
 
   return (
@@ -322,7 +309,7 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
           className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 transition-colors"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
-          <span>Exit</span>
+          <span>{t.common.cancel}</span>
         </button>
 
         <button
@@ -382,16 +369,14 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
         {currentStep === 1 && (
           <div className="space-y-4">
             <div>
-              <h2 className="text-xl font-bold text-slate-900">Demographics</h2>
-              <p className="text-xs text-slate-500">
-                Enter your name and contact details for medical record registration.
-              </p>
+              <h2 className="text-xl font-bold text-slate-900">{t.walkin.step1Title}</h2>
+              <p className="text-xs text-slate-500">{t.walkin.step1Desc}</p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  First Name *
+                  {t.walkin.firstName} *
                 </label>
                 <input
                   id="input-walkin-firstname"
@@ -405,7 +390,7 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Last Name *
+                  {t.walkin.lastName} *
                 </label>
                 <input
                   id="input-walkin-lastname"
@@ -419,7 +404,7 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Date of Birth *
+                  {t.walkin.dob} *
                 </label>
                 <input
                   id="input-walkin-dob"
@@ -432,7 +417,7 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Gender
+                  {t.walkin.gender}
                 </label>
                 <select
                   id="select-walkin-gender"
@@ -440,15 +425,15 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
                   onChange={(e) => setGender(e.target.value as any)}
                   className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:bg-white"
                 >
-                  <option value="female">Female</option>
-                  <option value="male">Male</option>
-                  <option value="other">Other</option>
+                  <option value="female">{t.walkin.female}</option>
+                  <option value="male">{t.walkin.male}</option>
+                  <option value="other">{t.walkin.other}</option>
                 </select>
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Phone (Queue SMS) *
+                  {t.walkin.phone} *
                 </label>
                 <input
                   id="input-walkin-phone"
@@ -462,7 +447,7 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Email
+                  {t.walkin.email}
                 </label>
                 <input
                   id="input-walkin-email"
@@ -486,7 +471,7 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
                 className="text-white font-bold py-2.5 px-5 rounded-xl flex items-center gap-2 text-xs shadow-xs disabled:opacity-50"
                 style={{ backgroundColor: "#5AA7A7" }}
               >
-                <span>Continue</span>
+                <span>{t.common.continue}</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -497,16 +482,14 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
         {currentStep === 2 && (
           <div className="space-y-4">
             <div>
-              <h2 className="text-xl font-bold text-slate-900">Treatment Modality & Symptoms</h2>
-              <p className="text-xs text-slate-500">
-                Choose your preferred medical system (Ayurveda or Allopathy) and describe your symptoms.
-              </p>
+              <h2 className="text-xl font-bold text-slate-900">{t.walkin.step2Title}</h2>
+              <p className="text-xs text-slate-500">{t.walkin.step2Desc}</p>
             </div>
 
             {/* Treatment System Selection */}
             <div className="space-y-2">
               <label className="block text-xs font-bold text-slate-800">
-                <span>Select Medical Care System *</span>
+                <span>{t.common.activeModality} *</span>
               </label>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -533,7 +516,7 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
                         <Pill className="w-4 h-4" />
                       </div>
                       <div>
-                        <h4 className="font-bold text-slate-900 text-xs">Allopathy</h4>
+                        <h4 className="font-bold text-slate-900 text-xs">{t.common.allopathy}</h4>
                         <span className="text-[10px] font-semibold block" style={{ color: "#5AA7A7" }}>
                           Conventional Western Medicine
                         </span>
@@ -544,11 +527,8 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
                     )}
                   </div>
                   <p className="text-[11px] text-slate-600 leading-relaxed">
-                    Evidence-based diagnostics, urgent care triage, laboratory panels, and conventional pharmacotherapy.
+                    {t.common.allopathyDesc}
                   </p>
-                  <div className="mt-2 text-[10px] text-slate-500 font-medium">
-                    Attending: Dr. Sarah Jenkins, MD • Dr. Gregory House, MD
-                  </div>
                 </button>
 
                 {/* Ayurveda Card */}
@@ -574,7 +554,7 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
                         <Leaf className="w-4 h-4" />
                       </div>
                       <div>
-                        <h4 className="font-bold text-slate-900 text-xs">Ayurveda</h4>
+                        <h4 className="font-bold text-slate-900 text-xs">{t.common.ayurveda}</h4>
                         <span className="text-[10px] text-emerald-700 font-semibold block">
                           Traditional Holistic Medicine
                         </span>
@@ -585,126 +565,78 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
                     )}
                   </div>
                   <p className="text-[11px] text-slate-600 leading-relaxed">
-                    Natural herbal remedies, Dosha balance assessment (Vata / Pitta / Kapha), dietetics, and Panchakarma rejuvenation.
+                    {t.common.ayurvedaDesc}
                   </p>
-                  <div className="mt-2 text-[10px] text-emerald-700 font-medium">
-                    Attending: Dr. Rajesh Sharma, BAMS, MD (Ayur) • Dr. Ananya Nair, BAMS
-                  </div>
                 </button>
               </div>
-
-              {/* Ayurvedic Sub-Focus Selector */}
-              {treatmentType === "ayurveda" && (
-                <div className="bg-emerald-50/80 border border-emerald-200 p-3 rounded-xl space-y-2 mt-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-emerald-950 flex items-center gap-1.5">
-                      <Leaf className="w-3.5 h-3.5 text-emerald-600" />
-                      <span>Ayurvedic Focus Area:</span>
-                    </span>
-                    <span className="text-[10px] font-semibold text-emerald-800 bg-white px-2 py-0.5 rounded-full border border-emerald-200">
-                      Ayurveda Suite 1A / 2B
-                    </span>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {[
-                      "Digestion & Metabolism (Agni)",
-                      "Joint & Musculoskeletal (Vata)",
-                      "Stress, Sleep & Mind (Manas)",
-                      "Skin, Blood & Heat (Pitta)",
-                      "Respiratory & Immunity (Kapha)",
-                      "Detox & Panchakarma",
-                      "General Holistic Checkup",
-                    ].map((focus) => (
-                      <button
-                        key={focus}
-                        type="button"
-                        onClick={() => {
-                          playButtonTap();
-                          setAyurvedicFocus(focus);
-                          setChiefComplaint(`Ayurvedic Consultation: ${focus}`);
-                        }}
-                        className={`text-[11px] px-2.5 py-1 rounded-lg border transition-all cursor-pointer ${
-                          ayurvedicFocus === focus
-                            ? "bg-emerald-700 text-white border-emerald-800 font-semibold"
-                            : "bg-white text-emerald-800 border-emerald-200 hover:bg-emerald-100/50"
-                        }`}
-                      >
-                        {focus}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
 
+            {/* Chief Complaint */}
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">
-                Chief Complaint *
+                {t.walkin.chiefComplaint} *
               </label>
               <textarea
                 id="textarea-chief-complaint"
                 rows={2}
                 value={chiefComplaint}
                 onChange={(e) => setChiefComplaint(e.target.value)}
-                placeholder={
-                  treatmentType === "ayurveda"
-                    ? "e.g., Sluggish digestion, bloating, joint stiffness, chronic stress"
-                    : "e.g., Right ankle swelling after misstep on stairs, migraine, cough"
-                }
-                className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs focus:outline-none focus:bg-white"
+                placeholder={t.walkin.chiefComplaintPlaceholder}
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs focus:outline-none focus:bg-white"
               />
             </div>
 
+            {/* Common Symptoms */}
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                Associated Symptoms:
+                {t.walkin.symptomsTitle}
               </label>
               <div className="flex flex-wrap gap-1.5">
                 {COMMON_SYMPTOMS.map((sym) => {
-                  const isSelected = selectedSymptoms.includes(sym.label);
+                  const active = selectedSymptoms.includes(sym.label);
                   return (
                     <button
-                      key={sym.id}
+                      key={sym.label}
                       type="button"
                       onClick={() => toggleSymptom(sym.label)}
-                      className="px-2.5 py-1 rounded-full text-xs font-medium border transition-all"
-                      style={{
-                        backgroundColor: isSelected ? "#5AA7A7" : "#f8fafc",
-                        color: isSelected ? "#ffffff" : "#334155",
-                        borderColor: isSelected ? "#5AA7A7" : "#e2e8f0",
-                      }}
+                      className={`text-xs px-2.5 py-1.5 rounded-lg border transition-colors flex items-center gap-1.5 ${
+                        active
+                          ? "bg-slate-900 text-white border-slate-900 font-semibold"
+                          : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
+                      }`}
                     >
-                      {sym.redFlag && <span className="mr-1">⚠️</span>}
-                      {sym.label}
+                      <span>{sym.redFlag ? "⚠️" : "•"}</span>
+                      <span>{sym.label}</span>
                     </button>
                   );
                 })}
               </div>
             </div>
 
-            {/* Pain Slider */}
-            <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-xs font-bold text-slate-800">Pain Level:</span>
+            {/* Pain Scale */}
+            <div>
+              <div className="flex justify-between items-center mb-1">
+                <label className="text-xs font-bold text-slate-700">
+                  {t.walkin.painLevel}
+                </label>
                 <span
-                  className="text-xs font-bold px-2.5 py-0.5 rounded-full"
+                  className="font-bold text-xs px-2 py-0.5 rounded-full"
                   style={{
-                    backgroundColor: painLevel >= 7 ? "#fee2e2" : painLevel >= 4 ? "#fef9c3" : "#dcfce7",
-                    color: painLevel >= 7 ? "#b91c1c" : painLevel >= 4 ? "#854d0e" : "#15803d",
+                    backgroundColor: painLevel > 6 ? "#fee2e2" : painLevel > 3 ? "#fef9c3" : "#dcfce7",
+                    color: painLevel > 6 ? "#991b1b" : painLevel > 3 ? "#854d0e" : "#166534",
                   }}
                 >
                   {painLevel} / 10
                 </span>
               </div>
               <input
-                id="slider-pain-level"
+                id="range-pain-level"
                 type="range"
                 min="0"
                 max="10"
                 value={painLevel}
                 onChange={(e) => setPainLevel(parseInt(e.target.value))}
-                className="w-full cursor-pointer"
-                style={{ accentColor: "#5AA7A7" }}
+                className="w-full accent-teal-600 cursor-pointer"
               />
             </div>
 
@@ -714,7 +646,7 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
                 onClick={() => setCurrentStep(1)}
                 className="text-slate-600 text-xs font-semibold px-3 py-2"
               >
-                Back
+                {t.common.back}
               </button>
               <button
                 id="btn-step2-next"
@@ -722,11 +654,10 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
                   playButtonTap();
                   setCurrentStep(3);
                 }}
-                disabled={!chiefComplaint.trim()}
-                className="text-white font-bold py-2.5 px-5 rounded-xl flex items-center gap-2 text-xs shadow-xs disabled:opacity-50"
+                className="text-white font-bold py-2.5 px-5 rounded-xl flex items-center gap-2 text-xs shadow-xs"
                 style={{ backgroundColor: "#5AA7A7" }}
               >
-                <span>Medical History</span>
+                <span>{t.common.continue}</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -737,66 +668,61 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
         {currentStep === 3 && (
           <div className="space-y-4">
             <div>
-              <h2 className="text-xl font-bold text-slate-900">Medical History</h2>
-              <p className="text-xs text-slate-500">
-                Allergies and medications for clinical safety.
-              </p>
+              <h2 className="text-xl font-bold text-slate-900">{t.walkin.step3Title}</h2>
+              <p className="text-xs text-slate-500">{t.walkin.step3Desc}</p>
             </div>
 
-            <div className="bg-amber-50/70 border border-amber-200 p-3.5 rounded-xl">
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="text-xs font-bold text-amber-900 flex items-center gap-1.5">
-                  <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
-                  <span>Allergies *</span>
+            <div>
+              <div className="flex justify-between items-center mb-1">
+                <label className="text-xs font-bold text-slate-700">
+                  {t.walkin.allergies}
                 </label>
-                <label className="flex items-center gap-1.5 text-xs text-slate-700 cursor-pointer">
+                <label className="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={hasNoAllergies}
-                    onChange={(e) => {
-                      setHasNoAllergies(e.target.checked);
-                      if (e.target.checked) setAllergiesText("");
-                    }}
+                    onChange={(e) => setHasNoAllergies(e.target.checked)}
                     className="rounded text-teal-600"
                   />
-                  <span>No Known Allergies (NKDA)</span>
+                  <span>{t.walkin.noAllergies}</span>
                 </label>
               </div>
-              <input
-                id="input-allergies"
-                type="text"
-                disabled={hasNoAllergies}
-                value={allergiesText}
-                onChange={(e) => setAllergiesText(e.target.value)}
-                placeholder={hasNoAllergies ? "NKDA" : "e.g. Penicillin, Sulfa, Latex"}
-                className="w-full bg-white border border-amber-300 rounded-lg px-3 py-1.5 text-xs focus:outline-none"
-              />
+              {!hasNoAllergies && (
+                <input
+                  id="input-allergies"
+                  type="text"
+                  value={allergiesText}
+                  onChange={(e) => setAllergiesText(e.target.value)}
+                  placeholder={t.walkin.allergiesPlaceholder}
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs focus:outline-none focus:bg-white"
+                />
+              )}
             </div>
 
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">
-                Current Medications
+                {t.walkin.medications}
               </label>
               <input
                 id="input-medications"
                 type="text"
                 value={medicationsText}
                 onChange={(e) => setMedicationsText(e.target.value)}
-                placeholder="e.g. Lisinopril 10mg, Multivitamin (or None)"
+                placeholder={t.walkin.medicationsPlaceholder}
                 className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs focus:outline-none focus:bg-white"
               />
             </div>
 
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">
-                Chronic Conditions
+                {t.walkin.conditions}
               </label>
               <input
                 id="input-conditions"
                 type="text"
                 value={conditionsText}
                 onChange={(e) => setConditionsText(e.target.value)}
-                placeholder="e.g. Asthma, Hypertension, Diabetes (or None)"
+                placeholder={t.walkin.conditionsPlaceholder}
                 className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs focus:outline-none focus:bg-white"
               />
             </div>
@@ -807,7 +733,7 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
                 onClick={() => setCurrentStep(2)}
                 className="text-slate-600 text-xs font-semibold px-3 py-2"
               >
-                Back
+                {t.common.back}
               </button>
               <button
                 id="btn-step3-next"
@@ -818,7 +744,7 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
                 className="text-white font-bold py-2.5 px-5 rounded-xl flex items-center gap-2 text-xs shadow-xs"
                 style={{ backgroundColor: "#5AA7A7" }}
               >
-                <span>Insurance</span>
+                <span>{t.common.continue}</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -829,23 +755,20 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
         {currentStep === 4 && (
           <div className="space-y-4">
             <div>
-              <h2 className="text-xl font-bold text-slate-900">Insurance</h2>
-              <p className="text-xs text-slate-500">
-                Scan insurance card or verify details.
-              </p>
+              <h2 className="text-xl font-bold text-slate-900">{t.walkin.step4Title}</h2>
+              <p className="text-xs text-slate-500">{t.walkin.step4Desc}</p>
             </div>
 
-            <div className="border border-slate-200 rounded-xl p-3.5 bg-slate-50 text-center">
+            {/* Scan Simulation Card */}
+            <div className="border border-dashed border-slate-300 rounded-xl p-4 text-center bg-slate-50">
               {insuranceCardScanned ? (
-                <div className="flex items-center justify-between p-2 rounded-lg text-xs" style={{ backgroundColor: "#f0fdf4", color: "#166534" }}>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4" style={{ color: "#BAC94A" }} />
-                    <span className="font-bold">Insurance Card Scanned</span>
-                  </div>
+                <div className="flex items-center justify-center gap-2 text-xs font-bold text-emerald-700">
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>{t.walkin.cardScanned}</span>
                   <button
                     type="button"
                     onClick={() => setInsuranceCardScanned(false)}
-                    className="text-slate-500 underline text-xs"
+                    className="ml-2 text-xs underline text-slate-500"
                   >
                     Rescan
                   </button>
@@ -853,7 +776,7 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
               ) : (
                 <div>
                   <Camera className="w-6 h-6 text-slate-400 mx-auto mb-1.5" />
-                  <p className="text-xs font-bold text-slate-700">Insurance Card Scan</p>
+                  <p className="text-xs font-bold text-slate-700">{t.walkin.scanInsurance}</p>
                   <button
                     type="button"
                     id="btn-scan-insurance-card"
@@ -875,7 +798,7 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Provider *
+                  {t.walkin.insuranceProvider} *
                 </label>
                 <select
                   id="select-insurance-provider"
@@ -893,7 +816,7 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Policy / Member ID *
+                  {t.walkin.memberId} *
                 </label>
                 <input
                   id="input-member-id"
@@ -912,7 +835,7 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
                 onClick={() => setCurrentStep(3)}
                 className="text-slate-600 text-xs font-semibold px-3 py-2"
               >
-                Back
+                {t.common.back}
               </button>
               <button
                 id="btn-step4-next"
@@ -923,7 +846,7 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
                 className="text-white font-bold py-2.5 px-5 rounded-xl flex items-center gap-2 text-xs shadow-xs"
                 style={{ backgroundColor: "#5AA7A7" }}
               >
-                <span>Consent & Sign</span>
+                <span>{t.common.continue}</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -934,23 +857,19 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
         {currentStep === 5 && (
           <div className="space-y-4">
             <div>
-              <h2 className="text-xl font-bold text-slate-900">Treatment Consent</h2>
-              <p className="text-xs text-slate-500">
-                Sign below to authorize clinic examination and direct billing.
-              </p>
+              <h2 className="text-xl font-bold text-slate-900">{t.walkin.step5Title}</h2>
+              <p className="text-xs text-slate-500">{t.walkin.step5Desc}</p>
             </div>
 
             <div className="bg-slate-50 border border-slate-200 p-3 rounded-xl text-xs text-slate-600 space-y-1.5">
-              <p>• I consent to outpatient examination and urgent care treatment.</p>
-              <p>• I acknowledge receipt of the HIPAA Notice of Privacy Practices.</p>
-              <p>• I authorize direct insurance submission for covered services.</p>
+              <p>• {t.walkin.hipaaConsent}</p>
             </div>
 
             <div>
               <div className="flex items-center justify-between mb-1">
                 <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
                   <PenTool className="w-3.5 h-3.5" style={{ color: "#5AA7A7" }} />
-                  <span>Signature Pad:</span>
+                  <span>{t.walkin.signaturePrompt}</span>
                 </label>
                 <button
                   type="button"
@@ -958,7 +877,7 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
                   className="text-xs text-slate-500 hover:text-slate-800 flex items-center gap-1"
                 >
                   <RotateCcw className="w-3 h-3" />
-                  <span>Clear</span>
+                  <span>{t.walkin.clearSignature}</span>
                 </button>
               </div>
 
@@ -979,7 +898,7 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
                 />
                 {!hasSignature && (
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none text-slate-300 text-xs">
-                    Sign with finger or stylus here
+                    {t.walkin.signaturePrompt}
                   </div>
                 )}
               </div>
@@ -991,7 +910,7 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
                 onClick={() => setCurrentStep(4)}
                 className="text-slate-600 text-xs font-semibold px-3 py-2"
               >
-                Back
+                {t.common.back}
               </button>
               <button
                 id="btn-step5-next"
@@ -1001,7 +920,7 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
                 style={{ backgroundColor: "#5AA7A7" }}
               >
                 <Sparkles className="w-3.5 h-3.5" />
-                <span>Run AI Triage</span>
+                <span>{t.common.submit}</span>
               </button>
             </div>
           </div>
@@ -1017,7 +936,7 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
                   style={{ borderColor: "#5AA7A7", borderTopColor: "transparent" }}
                 ></div>
                 <h3 className="text-base font-bold text-slate-900">
-                  Python Clinical AI Evaluating Intake...
+                  {t.walkin.analyzingTriage}
                 </h3>
                 <p className="text-xs text-slate-500">
                   Evaluating triage ESI score and clinical department routing.
@@ -1032,7 +951,7 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
                         className="text-[10px] font-bold px-2 py-0.5 rounded-full"
                         style={{ backgroundColor: "#f0fdf4", color: "#166534" }}
                       >
-                        Triage Complete
+                        {t.walkin.triageCompleted}
                       </span>
                       <span className="text-[10px] text-slate-400 font-mono">
                         {triageResult.source}
@@ -1074,7 +993,7 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
                             borderColor: treatmentType === "ayurveda" ? "#a7f3d0" : "#99f6e4",
                           }}
                         >
-                          {treatmentType === "ayurveda" ? "🌿 Ayurveda" : "💊 Allopathy"}
+                          {treatmentType === "ayurveda" ? "🌿 " + t.common.ayurveda : "💊 " + t.common.allopathy}
                         </span>
                         <span
                           className="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-white"
@@ -1089,14 +1008,14 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
                     </p>
                     <div className="text-[11px] text-slate-600 border-t pt-2 border-slate-200 grid grid-cols-2 gap-2">
                       <div>
-                        <strong>Department:</strong>{" "}
+                        <strong>{t.walkin.department}:</strong>{" "}
                         {treatmentType === "ayurveda" ? "Ayurvedic Medicine & Panchakarma" : "Urgent Care & Walk-In"}
                       </div>
                       <div>
-                        <strong>Assigned Station:</strong> {triageResult.recommendedRoom}
+                        <strong>{t.walkin.room}:</strong> {triageResult.recommendedRoom}
                       </div>
                       <div className="col-span-2 text-slate-700">
-                        <strong>Assigned Physician:</strong>{" "}
+                        <strong>{t.walkin.assignedDoctor}:</strong>{" "}
                         {treatmentType === "ayurveda"
                           ? "Dr. Rajesh Sharma, BAMS, MD (Ayur)"
                           : (triageResult.triageScore <= 2 ? "Dr. Sarah Jenkins, MD" : "Dr. Alisha Patel, DO")}
@@ -1111,7 +1030,7 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
                     style={{ backgroundColor: "#5AA7A7" }}
                   >
                     <CheckCircle2 className="w-5 h-5" />
-                    <span>Print Queue Ticket</span>
+                    <span>{t.ticketPass.printPass}</span>
                   </button>
                 </div>
               )

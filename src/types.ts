@@ -1,6 +1,6 @@
 export type AppMode = "kiosk" | "doctor" | "admin" | "tv-display" | "ehr-vault";
 
-export type Language = "en" | "es" | "zh";
+export type Language = "en" | "ml" | "hi";
 
 export type UrgencyLevel = "routine" | "moderate" | "urgent" | "emergent" | "critical";
 
