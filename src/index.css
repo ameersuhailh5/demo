@@ -10,10 +10,15 @@
 
 /* Custom Typography Families */
 @layer base {
-  /* English Font: Roman Serif */
-  .font-roman-serif,
-  .font-en-serif {
-    font-family: 'Playfair Display', 'Cinzel', 'Noto Serif', 'Times New Roman', serif;
+  /* English Font: Creato Display (by Lafontype) */
+  .font-creato,
+  .font-creato-display,
+  .font-coolvetica,
+  .font-en-coolvetica,
+  .font-nk57-mono,
+  .font-roman-serif {
+    font-family: 'Creato Display', 'CreatoDisplay', 'Plus Jakarta Sans', 'Archivo', 'Helvetica Neue', Arial, sans-serif;
+    letter-spacing: -0.01em;
   }
 
   /* Malayalam Font: Gayathri */
@@ -22,15 +27,18 @@
     font-family: 'Gayathri', 'Manjari', 'AnjaliOldLipi', sans-serif, serif;
   }
 
-  /* Hindi Font: Inknut Antiqua (इंक नट) */
-  .font-inknut,
-  .font-hi-serif {
-    font-family: 'Inknut Antiqua', 'Rozha One', 'Yatra One', 'Noto Serif Devanagari', serif;
+  /* Hindi Font: Baloo 2 (बालू 2) - Regular weight */
+  .font-baloo,
+  .font-hi-baloo,
+  .font-inknut {
+    font-family: 'Baloo 2', 'Baloo Tamma 2', cursive, sans-serif;
+    font-weight: 400 !important;
   }
 
   /* Dynamic Language Root Styles */
   [data-lang="en"] {
-    font-family: 'Playfair Display', 'Cinzel', 'Noto Serif', 'Times New Roman', serif;
+    font-family: 'Creato Display', 'CreatoDisplay', 'Plus Jakarta Sans', 'Archivo', 'Helvetica Neue', Arial, sans-serif;
+    letter-spacing: -0.005em;
   }
 
   [data-lang="ml"] {
@@ -38,13 +46,15 @@
   }
 
   [data-lang="hi"] {
-    font-family: 'Inknut Antiqua', 'Noto Serif Devanagari', serif;
+    font-family: 'Baloo 2', 'Baloo Tamma 2', cursive, sans-serif;
+    font-weight: 400;
   }
 
   /* Headings with high-contrast script styling */
   [data-lang="en"] h1, [data-lang="en"] h2, [data-lang="en"] h3, [data-lang="en"] .font-brand-heading {
-    font-family: 'Playfair Display', 'Cinzel', serif;
-    letter-spacing: -0.01em;
+    font-family: 'Creato Display', 'CreatoDisplay', 'Plus Jakarta Sans', 'Archivo', 'Helvetica Neue', Arial, sans-serif;
+    letter-spacing: -0.02em;
+    font-weight: 700;
   }
 
   [data-lang="ml"] h1, [data-lang="ml"] h2, [data-lang="ml"] h3, [data-lang="ml"] .font-brand-heading {
@@ -52,9 +62,20 @@
     font-weight: 700;
   }
 
-  [data-lang="hi"] h1, [data-lang="hi"] h2, [data-lang="hi"] h3, [data-lang="hi"] .font-brand-heading {
-    font-family: 'Inknut Antiqua', serif;
-    font-weight: 700;
+  /* Keep Hindi headings and text unbolded / regular weight */
+  [data-lang="hi"] h1,
+  [data-lang="hi"] h2,
+  [data-lang="hi"] h3,
+  [data-lang="hi"] h4,
+  [data-lang="hi"] strong,
+  [data-lang="hi"] b,
+  [data-lang="hi"] .font-bold,
+  [data-lang="hi"] .font-black,
+  [data-lang="hi"] .font-extrabold,
+  [data-lang="hi"] .font-semibold,
+  [data-lang="hi"] .font-brand-heading {
+    font-family: 'Baloo 2', 'Baloo Tamma 2', cursive, sans-serif;
+    font-weight: 400 !important;
   }
 }
 

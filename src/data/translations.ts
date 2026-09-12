@@ -611,3 +611,162 @@ export const TRANSLATIONS: Record<Language, TranslationDictionary> = {
     },
   },
 };
+
+export interface SymptomItem {
+  id: string;
+  category: string;
+  redFlag?: boolean;
+  translations: Record<Language, string>;
+}
+
+export const CLINIC_SYMPTOMS: SymptomItem[] = [
+  {
+    id: "fever",
+    category: "General",
+    translations: {
+      en: "Fever / Chills",
+      ml: "പനി / വിറയൽ",
+      hi: "बुखार / ठंड लगना",
+    },
+  },
+  {
+    id: "cough",
+    category: "Respiratory",
+    translations: {
+      en: "Persistent Cough",
+      ml: "തുടർച്ചയായ ചുമ",
+      hi: "लगातार खांसी",
+    },
+  },
+  {
+    id: "sore_throat",
+    category: "ENT",
+    translations: {
+      en: "Sore Throat",
+      ml: "തൊണ്ടവേദന",
+      hi: "गले में खराश",
+    },
+  },
+  {
+    id: "headache",
+    category: "Neurological",
+    translations: {
+      en: "Severe Headache / Migraine",
+      ml: "കഠിനമായ തലവേദന / മൈഗ്രെയ്ൻ",
+      hi: "गंभीर सिरदर्द / माइग्रेन",
+    },
+  },
+  {
+    id: "chest_pain",
+    category: "Cardiovascular",
+    redFlag: true,
+    translations: {
+      en: "Chest Discomfort / Pressure",
+      ml: "നെഞ്ചുവേദന / ഭാരം",
+      hi: "सीने में दर्द / भारीपन",
+    },
+  },
+  {
+    id: "shortness_breath",
+    category: "Respiratory",
+    redFlag: true,
+    translations: {
+      en: "Shortness of Breath",
+      ml: "ശ്വാസംമുട്ടൽ",
+      hi: "सांस लेने में तकलीफ",
+    },
+  },
+  {
+    id: "stomach_pain",
+    category: "Gastrointestinal",
+    translations: {
+      en: "Acute Abdominal Pain",
+      ml: "കഠിനമായ വയറുവേദന",
+      hi: "पेट में तेज दर्द",
+    },
+  },
+  {
+    id: "nausea",
+    category: "Gastrointestinal",
+    translations: {
+      en: "Nausea or Vomiting",
+      ml: "ഛർദ്ദി അല്ലെങ്കിൽ ഓക്കാനം",
+      hi: "मतली या उल्टी",
+    },
+  },
+  {
+    id: "sprain_joint",
+    category: "Musculoskeletal",
+    translations: {
+      en: "Joint Pain or Sprain",
+      ml: "സന്ധി വേദന / ഉളുക്ക്",
+      hi: "जोड़ों का दर्द या मोच",
+    },
+  },
+  {
+    id: "rash_skin",
+    category: "Dermatology",
+    translations: {
+      en: "Sudden Skin Rash / Hives",
+      ml: "ത്വക്ക് ചൊറിച്ചിൽ / തിണർപ്പ്",
+      hi: "त्वचा पर लाल चकत्ते / खुजली",
+    },
+  },
+  {
+    id: "ear_pain",
+    category: "ENT",
+    translations: {
+      en: "Ear Pain or Infection",
+      ml: "ചെവിവേദന / അണുബാധ",
+      hi: "कान का दर्द या संक्रमण",
+    },
+  },
+  {
+    id: "urinary",
+    category: "Urology",
+    translations: {
+      en: "Painful or Frequent Urination",
+      ml: "മൂത്രമൊഴിക്കുമ്പോൾ വേദന / ഇടയ്ക്കിടെയുള്ള മൂത്രമൊഴിക്കൽ",
+      hi: "पेशाब में दर्द या बार-बार पेशाब आना",
+    },
+  },
+  {
+    id: "dizziness",
+    category: "Neurological",
+    translations: {
+      en: "Dizziness or Lightheadedness",
+      ml: "തലകറക്കം / ക്ഷീണം",
+      hi: "चक्कर आना / कमजोरी",
+    },
+  },
+  {
+    id: "wound_cut",
+    category: "Injury",
+    translations: {
+      en: "Laceration / Cut / Bleeding",
+      ml: "മുറിവ് / രക്തസ്രാവം",
+      hi: "घाव / कट / रक्तस्राव",
+    },
+  },
+];
+
+export const DURATION_OPTIONS: Record<Language, Array<{ id: string; label: string }>> = {
+  en: [
+    { id: "24h", label: "Past 24 hours" },
+    { id: "2-3d", label: "2 - 3 Days" },
+    { id: "1w+", label: "More than a week" },
+    { id: "sudden", label: "Sudden onset (Past 2 hours)" },
+  ],
+  ml: [
+    { id: "24h", label: "കഴിഞ്ഞ 24 മണിക്കൂർ" },
+    { id: "2-3d", label: "2 - 3 ദിവസങ്ങൾ" },
+    { id: "1w+", label: "ഒരാഴ്ചയിലധികം" },
+    { id: "sudden", label: "പെട്ടെന്ന് തുടങ്ങിയത് (കഴിഞ്ഞ 2 മണിക്കൂർ)" },
+  ],
+  hi: [
+    { id: "24h", label: "पिछले 24 घंटे" },
+    { id: "2-3d", label: "2 - 3 दिन" },
+    { id: "1w+", label: "एक सप्ताह से अधिक" },
+    { id: "sudden", label: "अचानक शुरू हुआ (पिछले 2 घंटे)" },
+  ],
+};

@@ -1,7 +1,7 @@
 import React, { useState, useRef } from "react";
 import { QueueItem, TriageEvaluation, Language, PatientRecord, TreatmentType } from "../types";
-import { COMMON_SYMPTOMS, INSURANCE_PROVIDERS } from "../data/mockData";
-import { TRANSLATIONS } from "../data/translations";
+import { INSURANCE_PROVIDERS } from "../data/mockData";
+import { TRANSLATIONS, CLINIC_SYMPTOMS, DURATION_OPTIONS } from "../data/translations";
 import {
   Activity,
   CreditCard,
@@ -592,21 +592,58 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
                 {t.walkin.symptomsTitle}
               </label>
               <div className="flex flex-wrap gap-1.5">
-                {COMMON_SYMPTOMS.map((sym) => {
-                  const active = selectedSymptoms.includes(sym.label);
+                {CLINIC_SYMPTOMS.map((sym) => {
+                  const localizedLabel = sym.translations[language] || sym.translations.en;
+                  const active =
+                    selectedSymptoms.includes(sym.id) ||
+                    selectedSymptoms.includes(sym.translations.en) ||
+                    selectedSymptoms.includes(localizedLabel);
                   return (
                     <button
-                      key={sym.label}
+                      key={sym.id}
                       type="button"
-                      onClick={() => toggleSymptom(sym.label)}
-                      className={`text-xs px-2.5 py-1.5 rounded-lg border transition-colors flex items-center gap-1.5 ${
+                      id={`btn-symptom-${sym.id}`}
+                      onClick={() => toggleSymptom(sym.id)}
+                      className={`text-xs px-3 py-2 rounded-xl border transition-all flex items-center gap-1.5 cursor-pointer ${
                         active
-                          ? "bg-slate-900 text-white border-slate-900 font-semibold"
-                          : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
+                          ? "bg-slate-900 text-white border-slate-900 font-semibold shadow-xs scale-102"
+                          : "bg-white text-slate-700 border-slate-200 hover:border-teal-400 hover:bg-slate-50"
                       }`}
                     >
-                      <span>{sym.redFlag ? "⚠️" : "•"}</span>
-                      <span>{sym.label}</span>
+                      <span className="text-xs">{sym.redFlag ? "⚠️" : "•"}</span>
+                      <span className={language === "hi" ? "font-normal" : "font-medium"}>
+                        {localizedLabel}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Symptom Duration */}
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                {t.walkin.duration}
+              </label>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {(DURATION_OPTIONS[language] || DURATION_OPTIONS.en).map((opt) => {
+                  const isSelected = duration === opt.id || duration === opt.label;
+                  return (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      id={`btn-duration-${opt.id}`}
+                      onClick={() => {
+                        playButtonTap();
+                        setDuration(opt.label);
+                      }}
+                      className={`px-2.5 py-2 rounded-xl border text-xs text-center transition-all cursor-pointer ${
+                        isSelected
+                          ? "bg-teal-50 border-teal-600 text-teal-900 font-bold shadow-xs"
+                          : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
+                      }`}
+                    >
+                      {opt.label}
                     </button>
                   );
                 })}

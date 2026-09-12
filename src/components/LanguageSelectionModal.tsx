@@ -109,12 +109,12 @@ export const LanguageSelectionModal: React.FC<LanguageSelectionModalProps> = ({
                   <div>
                     <div className="flex items-center gap-2">
                       <span
-                        className={`text-lg font-black text-slate-900 tracking-tight ${
+                        className={`text-lg text-slate-900 ${
                           lang.id === "en"
-                            ? "font-roman-serif"
+                            ? "font-creato-display font-bold"
                             : lang.id === "ml"
-                            ? "font-gayathri"
-                            : "font-inknut"
+                            ? "font-gayathri font-bold"
+                            : "font-baloo font-normal"
                         }`}
                       >
                         {lang.nativeName}
@@ -137,10 +137,10 @@ export const LanguageSelectionModal: React.FC<LanguageSelectionModalProps> = ({
                     <p
                       className={`text-xs text-slate-600 mt-0.5 ${
                         lang.id === "en"
-                          ? "font-roman-serif"
+                          ? "font-creato-display font-medium"
                           : lang.id === "ml"
                           ? "font-gayathri"
-                          : "font-inknut"
+                          : "font-baloo font-normal"
                       }`}
                     >
                       {lang.description}
@@ -148,10 +148,10 @@ export const LanguageSelectionModal: React.FC<LanguageSelectionModalProps> = ({
                     <p
                       className={`text-[11px] text-teal-700 font-medium italic mt-1 ${
                         lang.id === "en"
-                          ? "font-roman-serif"
+                          ? "font-creato-display"
                           : lang.id === "ml"
                           ? "font-gayathri"
-                          : "font-inknut"
+                          : "font-baloo font-normal"
                       }`}
                     >
                       "{lang.welcomeSnippet}"

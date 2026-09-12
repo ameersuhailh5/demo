@@ -29,6 +29,7 @@ import { TicketPassModal } from "./components/TicketPassModal";
 import { UpdateRecordsModal } from "./components/UpdateRecordsModal";
 import { StaffAuthModal } from "./components/StaffAuthModal";
 import { LanguageSelectionModal } from "./components/LanguageSelectionModal";
+import { FloatingLanguageSwitcher } from "./components/FloatingLanguageSwitcher";
 import { playClinicChime, playSuccessChime } from "./utils/audio";
 import { Lock, ShieldAlert } from "lucide-react";
 
@@ -50,8 +51,24 @@ export default function App() {
     requiredRole: "doctor",
   });
 
-  // Accessibility & Preferences
-  const [language, setLanguage] = useState<Language>("en");
+  // Accessibility & Preferences with persistent language storage
+  const [language, setLanguageState] = useState<Language>(() => {
+    try {
+      const saved = localStorage.getItem("clinic_kiosk_language");
+      if (saved === "en" || saved === "ml" || saved === "hi") {
+        return saved;
+      }
+    } catch {}
+    return "en";
+  });
+
+  const setLanguage = (newLang: Language) => {
+    setLanguageState(newLang);
+    try {
+      localStorage.setItem("clinic_kiosk_language", newLang);
+    } catch {}
+  };
+
   const [fontSizeLarge, setFontSizeLarge] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
 
@@ -437,10 +454,10 @@ export default function App() {
       case "ml":
         return "font-gayathri";
       case "hi":
-        return "font-inknut";
+        return "font-baloo";
       case "en":
       default:
-        return "font-roman-serif";
+        return "font-creato-display";
     }
   };
 
@@ -705,6 +722,13 @@ export default function App() {
           onClose={() => setShowLanguageModal(false)}
         />
       )}
+
+      {/* Persistent Floating Quick Language Switcher (Bottom-Right) */}
+      <FloatingLanguageSwitcher
+        currentLanguage={language}
+        onSelectLanguage={setLanguage}
+        soundEnabled={soundEnabled}
+      />
     </div>
   );
 }

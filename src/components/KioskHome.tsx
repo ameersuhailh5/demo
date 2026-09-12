@@ -10,14 +10,12 @@ import {
   Sparkles,
   Leaf,
   Pill,
-  Globe2,
-  Check,
 } from "lucide-react";
 import { playButtonTap } from "../utils/audio";
 
 interface KioskHomeProps {
   language: Language;
-  onSelectLanguage: (lang: Language) => void;
+  onSelectLanguage?: (lang: Language) => void;
   onStartWalkIn: () => void;
   onViewQueue: () => void;
   onUpdateRecords: () => void;
@@ -27,7 +25,6 @@ interface KioskHomeProps {
 
 export const KioskHome: React.FC<KioskHomeProps> = ({
   language,
-  onSelectLanguage,
   onStartWalkIn,
   onViewQueue,
   onUpdateRecords,
@@ -36,106 +33,8 @@ export const KioskHome: React.FC<KioskHomeProps> = ({
 }) => {
   const t = TRANSLATIONS[language] || TRANSLATIONS.en;
 
-  const languageOptions: Array<{
-    id: Language;
-    name: string;
-    nativeName: string;
-    flagDesc: string;
-  }> = [
-    { id: "en", name: "English", nativeName: "English", flagDesc: "Primary" },
-    { id: "ml", name: "Malayalam", nativeName: "മലയാളം", flagDesc: "കേരളം" },
-    { id: "hi", name: "Hindi", nativeName: "हिन्दी", flagDesc: "भारत" },
-  ];
-
   return (
     <div className="max-w-4xl mx-auto px-4 py-6 sm:py-8">
-      {/* Prominent Language Selection Bar / Banner */}
-      <div className="mb-8 bg-white border border-slate-200 shadow-sm rounded-3xl p-4 sm:p-5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3 pb-3 border-b border-slate-100">
-          <div className="flex items-center gap-2.5">
-            <div
-              className="w-8 h-8 rounded-xl flex items-center justify-center text-white"
-              style={{ backgroundColor: "#5AA7A7" }}
-            >
-              <Globe2 className="w-4 h-4" />
-            </div>
-            <div>
-              <span className="text-xs font-bold text-slate-800 uppercase tracking-wide block">
-                {t.kioskHome.selectLanguagePrompt}
-              </span>
-              <span className="text-[11px] text-slate-500">
-                Touch a language below to change the whole application
-              </span>
-            </div>
-          </div>
-          <span
-            className="text-[11px] font-bold px-2.5 py-0.5 rounded-full self-start sm:self-auto"
-            style={{ backgroundColor: "#f0fdf9", color: "#5AA7A7" }}
-          >
-            Active: {language === "en" ? "English" : language === "ml" ? "മലയാളം" : "हिन्दी"}
-          </span>
-        </div>
-
-        {/* 3 Large Touch-Friendly Language Buttons */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {languageOptions.map((opt) => {
-            const isSelected = language === opt.id;
-            return (
-              <button
-                key={opt.id}
-                id={`btn-home-lang-${opt.id}`}
-                onClick={() => {
-                  playButtonTap();
-                  onSelectLanguage(opt.id);
-                }}
-                className={`flex items-center justify-between p-3.5 rounded-2xl border-2 transition-all cursor-pointer text-left group transform hover:-translate-y-0.5 active:translate-y-0 ${
-                  isSelected
-                    ? "bg-teal-50/80 border-teal-600 shadow-sm ring-2 ring-teal-500/20"
-                    : "bg-slate-50 border-slate-200 hover:border-teal-300 hover:bg-white"
-                }`}
-              >
-                <div>
-                  <div className="flex items-center gap-1.5">
-                    <span
-                      className={`text-base font-black text-slate-900 ${
-                        opt.id === "en"
-                          ? "font-roman-serif"
-                          : opt.id === "ml"
-                          ? "font-gayathri"
-                          : "font-inknut"
-                      }`}
-                    >
-                      {opt.nativeName}
-                    </span>
-                    {opt.nativeName !== opt.name && (
-                      <span className="text-xs text-slate-500 font-semibold">
-                        ({opt.name})
-                      </span>
-                    )}
-                  </div>
-                  <span className="text-[11px] text-slate-500 font-medium block mt-0.5">
-                    {opt.flagDesc}
-                  </span>
-                </div>
-
-                <div
-                  className={`w-6 h-6 rounded-full flex items-center justify-center transition-colors ${
-                    isSelected
-                      ? "text-white shadow-xs"
-                      : "border border-slate-300 group-hover:border-teal-500"
-                  }`}
-                  style={{
-                    backgroundColor: isSelected ? "#5AA7A7" : undefined,
-                  }}
-                >
-                  {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
       {/* Header Banner */}
       <div className="text-center mb-8 sm:mb-10">
         <div
