@@ -592,6 +592,7 @@ export default function App() {
               patients={patients}
               queue={queue}
               appointments={appointments}
+              auditLogs={auditLogs}
               onAssignDoctor={handleAssignDoctor}
               onUpdateDoctorAvailability={handleUpdateDoctorAvailability}
               onAddDoctor={handleAddDoctor}

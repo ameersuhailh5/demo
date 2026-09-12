@@ -99,12 +99,14 @@ export const WalkInRegistration: React.FC<WalkInRegistrationProps> = ({
           reader.readAsDataURL(blob);
           const base64Audio = await base64Promise;
 
+          const cleanMimeType = (blob.type || "audio/webm").split(";")[0].trim();
+
           const response = await fetch("/api/transcribe", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               audio: base64Audio,
-              mimeType: blob.type || "audio/webm",
+              mimeType: cleanMimeType,
               language: language,
             }),
           });

@@ -15,6 +15,8 @@ import {
   AlertCircle,
   Clock,
   Send,
+  Globe,
+  Edit3,
 } from "lucide-react";
 import { Language } from "../types";
 
@@ -29,16 +31,18 @@ interface AudioTranscribeModalProps {
 export const AudioTranscribeModal: React.FC<AudioTranscribeModalProps> = ({
   isOpen,
   onClose,
-  language,
+  language: initialLanguage,
   onApplyTranscript,
   targetFieldLabel = "Chief Complaint / Symptoms",
 }) => {
+  const [activeLang, setActiveLang] = useState<Language>(initialLanguage || "en");
   const [isRecording, setIsRecording] = useState(false);
   const [recordingDuration, setRecordingDuration] = useState(0);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [transcript, setTranscript] = useState<string>("");
+  const [liveInterimText, setLiveInterimText] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [visualizerLevels, setVisualizerLevels] = useState<number[]>(new Array(16).fill(10));
@@ -49,6 +53,14 @@ export const AudioTranscribeModal: React.FC<AudioTranscribeModalProps> = ({
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const animFrameRef = useRef<number | null>(null);
+  const speechRecognitionRef = useRef<any>(null);
+
+  // Sync initial language when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setActiveLang(initialLanguage || "en");
+    }
+  }, [isOpen, initialLanguage]);
 
   // Cleanup on unmount or close
   useEffect(() => {
@@ -61,6 +73,7 @@ export const AudioTranscribeModal: React.FC<AudioTranscribeModalProps> = ({
       setAudioUrl(null);
       setRecordingDuration(0);
       setTranscript("");
+      setLiveInterimText("");
       setErrorMessage(null);
       setIsTranscribing(false);
     }
@@ -70,6 +83,7 @@ export const AudioTranscribeModal: React.FC<AudioTranscribeModalProps> = ({
     try {
       setErrorMessage(null);
       setTranscript("");
+      setLiveInterimText("");
       audioChunksRef.current = [];
 
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -79,6 +93,39 @@ export const AudioTranscribeModal: React.FC<AudioTranscribeModalProps> = ({
           channelCount: 1,
         },
       });
+
+      // Initialize Web Speech API if supported for live real-time transcript preview
+      const SpeechRecognition =
+        (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
+      if (SpeechRecognition) {
+        try {
+          const recognition = new SpeechRecognition();
+          recognition.continuous = true;
+          recognition.interimResults = true;
+          recognition.lang =
+            activeLang === "ml" ? "ml-IN" : activeLang === "hi" ? "hi-IN" : "en-US";
+
+          recognition.onresult = (event: any) => {
+            let currentText = "";
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+              currentText += event.results[i][0].transcript;
+            }
+            if (currentText) {
+              setLiveInterimText(currentText);
+            }
+          };
+
+          recognition.onerror = (e: any) => {
+            console.warn("SpeechRecognition note:", e?.error);
+          };
+
+          recognition.start();
+          speechRecognitionRef.current = recognition;
+        } catch (e) {
+          console.warn("Speech recognition initialization note:", e);
+        }
+      }
 
       // Audio visualizer setup
       try {
@@ -94,7 +141,7 @@ export const AudioTranscribeModal: React.FC<AudioTranscribeModalProps> = ({
           if (!analyserRef.current) return;
           const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
           analyserRef.current.getByteFrequencyData(dataArray);
-          
+
           const newLevels = [];
           const step = Math.floor(dataArray.length / 16);
           for (let i = 0; i < 16; i++) {
@@ -107,7 +154,7 @@ export const AudioTranscribeModal: React.FC<AudioTranscribeModalProps> = ({
         };
         updateLevels();
       } catch (e) {
-        console.warn("Visualizer fallback:", e);
+        console.warn("Visualizer setup note:", e);
       }
 
       // Check supported mime types
@@ -135,8 +182,14 @@ export const AudioTranscribeModal: React.FC<AudioTranscribeModalProps> = ({
         const url = URL.createObjectURL(blob);
         setAudioUrl(url);
 
-        // Stop stream tracks
+        // Stop stream tracks & audio contexts
         stream.getTracks().forEach((track) => track.stop());
+
+        if (speechRecognitionRef.current) {
+          try {
+            speechRecognitionRef.current.stop();
+          } catch (e) {}
+        }
 
         if (animFrameRef.current) {
           cancelAnimationFrame(animFrameRef.current);
@@ -169,6 +222,11 @@ export const AudioTranscribeModal: React.FC<AudioTranscribeModalProps> = ({
       clearInterval(timerIntervalRef.current);
       timerIntervalRef.current = null;
     }
+    if (speechRecognitionRef.current) {
+      try {
+        speechRecognitionRef.current.stop();
+      } catch (e) {}
+    }
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
       mediaRecorderRef.current.stop();
     }
@@ -193,6 +251,9 @@ export const AudioTranscribeModal: React.FC<AudioTranscribeModalProps> = ({
       reader.readAsDataURL(blob);
       const base64Audio = await base64Promise;
 
+      // Clean mimeType - strip codecs string parameters like ";codecs=opus"
+      const cleanMimeType = (blob.type || "audio/webm").split(";")[0].trim();
+
       const res = await fetch("/api/transcribe", {
         method: "POST",
         headers: {
@@ -200,8 +261,8 @@ export const AudioTranscribeModal: React.FC<AudioTranscribeModalProps> = ({
         },
         body: JSON.stringify({
           audio: base64Audio,
-          mimeType: blob.type || "audio/webm",
-          language: language,
+          mimeType: cleanMimeType,
+          language: activeLang,
         }),
       });
 
@@ -212,11 +273,23 @@ export const AudioTranscribeModal: React.FC<AudioTranscribeModalProps> = ({
 
       setTranscript(data.transcript);
     } catch (err: any) {
-      console.error("Transcription error:", err);
-      setErrorMessage(err.message || "Error processing transcription with gemini-3.5-transcribe");
+      console.warn("Server transcription error, checking live interim fallback:", err);
+      if (liveInterimText) {
+        setTranscript(liveInterimText);
+        setErrorMessage("Used live speech recognition fallback.");
+      } else {
+        setErrorMessage(
+          err.message || "Error processing transcription. You can try a preset complaint below."
+        );
+      }
     } finally {
       setIsTranscribing(false);
     }
+  };
+
+  const handleApplyPreset = (presetText: string) => {
+    setTranscript(presetText);
+    setErrorMessage(null);
   };
 
   const handleCopy = () => {
@@ -276,7 +349,7 @@ export const AudioTranscribeModal: React.FC<AudioTranscribeModalProps> = ({
                 </span>
               </div>
               <p className="text-xs text-teal-100 mt-0.5">
-                Speak in English, Malayalam (മലയാളം), or Hindi (हिन्दी)
+                Multi-lingual Medical Dictation Engine
               </p>
             </div>
           </div>
@@ -292,8 +365,50 @@ export const AudioTranscribeModal: React.FC<AudioTranscribeModalProps> = ({
           </button>
         </div>
 
+        {/* Language Selection Selector Bar */}
+        <div className="bg-slate-950 px-5 py-2.5 border-b border-slate-800 flex items-center justify-between text-xs">
+          <span className="text-slate-400 font-medium flex items-center gap-1.5">
+            <Globe className="w-3.5 h-3.5 text-teal-400" /> Spoken Language:
+          </span>
+          <div className="flex items-center gap-1.5 bg-slate-900 p-1 rounded-xl border border-slate-800">
+            <button
+              type="button"
+              onClick={() => setActiveLang("en")}
+              className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                activeLang === "en"
+                  ? "bg-teal-500 text-slate-950 shadow-xs"
+                  : "text-slate-400 hover:text-white"
+              }`}
+            >
+              🇬🇧 English
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveLang("ml")}
+              className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                activeLang === "ml"
+                  ? "bg-teal-500 text-slate-950 shadow-xs"
+                  : "text-slate-400 hover:text-white"
+              }`}
+            >
+              🇮🇳 മലയാളം
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveLang("hi")}
+              className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                activeLang === "hi"
+                  ? "bg-teal-500 text-slate-950 shadow-xs"
+                  : "text-slate-400 hover:text-white"
+              }`}
+            >
+              🇮🇳 हिन्दी
+            </button>
+          </div>
+        </div>
+
         {/* Content Body */}
-        <div className="p-6 space-y-6 overflow-y-auto flex-1">
+        <div className="p-6 space-y-5 overflow-y-auto flex-1">
           {/* Status & Visualizer Card */}
           <div className="bg-slate-950/80 rounded-2xl p-6 border border-slate-800 text-center flex flex-col items-center justify-center min-h-[170px] relative overflow-hidden">
             {isRecording ? (
@@ -309,7 +424,7 @@ export const AudioTranscribeModal: React.FC<AudioTranscribeModalProps> = ({
                 </div>
 
                 {/* Animated Waveform Visualizer */}
-                <div className="flex items-center justify-center gap-1.5 h-14 px-4">
+                <div className="flex items-center justify-center gap-1.5 h-12 px-4">
                   {visualizerLevels.map((height, i) => (
                     <div
                       key={i}
@@ -322,9 +437,15 @@ export const AudioTranscribeModal: React.FC<AudioTranscribeModalProps> = ({
                   ))}
                 </div>
 
-                <p className="text-xs text-slate-400">
-                  Speak clearly into your microphone... Click Stop when done.
-                </p>
+                {liveInterimText ? (
+                  <div className="p-2.5 bg-slate-900/90 rounded-xl border border-teal-500/30 text-xs text-teal-200 animate-pulse font-sans max-h-20 overflow-y-auto">
+                    "{liveInterimText}"
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-400">
+                    Speak clearly into your microphone... Click Stop when finished.
+                  </p>
+                )}
               </div>
             ) : isTranscribing ? (
               <div className="space-y-3 flex flex-col items-center">
@@ -337,7 +458,7 @@ export const AudioTranscribeModal: React.FC<AudioTranscribeModalProps> = ({
                     Transcribing with Gemini 3.5 Transcribe...
                   </h4>
                   <p className="text-xs text-slate-400 mt-1">
-                    Converting audio to multilingual text with medical precision
+                    Analyzing speech wave & converting to clinical text
                   </p>
                 </div>
               </div>
@@ -345,7 +466,7 @@ export const AudioTranscribeModal: React.FC<AudioTranscribeModalProps> = ({
               <div className="w-full text-left space-y-3">
                 <div className="flex items-center justify-between text-xs text-slate-400 border-b border-slate-800 pb-2">
                   <span className="flex items-center gap-1 text-[#FF5353] font-bold">
-                    <Check className="w-3.5 h-3.5" /> Transcription Ready
+                    <Check className="w-3.5 h-3.5 text-teal-400" /> Transcription Output (Editable)
                   </span>
                   {audioUrl && (
                     <div className="flex items-center gap-2">
@@ -353,9 +474,13 @@ export const AudioTranscribeModal: React.FC<AudioTranscribeModalProps> = ({
                     </div>
                   )}
                 </div>
-                <div className="bg-slate-900/90 rounded-xl p-4 border border-slate-800 text-sm text-slate-100 font-sans leading-relaxed select-text whitespace-pre-wrap">
-                  {transcript}
-                </div>
+                <textarea
+                  value={transcript}
+                  onChange={(e) => setTranscript(e.target.value)}
+                  rows={4}
+                  className="w-full bg-slate-900/90 rounded-xl p-3 border border-slate-700 text-sm text-slate-100 font-sans leading-relaxed focus:outline-none focus:ring-2 focus:ring-teal-400"
+                  placeholder="Transcribed output text..."
+                />
               </div>
             ) : (
               <div className="space-y-2">
@@ -367,22 +492,85 @@ export const AudioTranscribeModal: React.FC<AudioTranscribeModalProps> = ({
                 </div>
                 <h4 className="text-sm font-bold text-white">Press Record to Start Speaking</h4>
                 <p className="text-xs text-slate-400 max-w-sm">
-                  Describe symptoms, medical complaint, or clinic questions in your preferred language.
+                  Describe symptoms or medical complaints in {activeLang === "ml" ? "Malayalam (മലയാളം)" : activeLang === "hi" ? "Hindi (ഹിन्दी)" : "English"}.
                 </p>
               </div>
             )}
 
             {/* Error banner */}
             {errorMessage && (
-              <div className="mt-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2 w-full text-left">
-                <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
+              <div className="mt-3 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs flex items-center gap-2 w-full text-left">
+                <AlertCircle className="w-4 h-4 shrink-0 text-amber-400" />
                 <span>{errorMessage}</span>
               </div>
             )}
           </div>
 
+          {/* Sample Presets for Testing */}
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+              1-Click Clinical Sample Presets ({activeLang.toUpperCase()})
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+              {activeLang === "en" && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => handleApplyPreset("Patient complains of severe throbbing headache for 2 days with mild nausea and photophobia.")}
+                    className="p-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700 text-left text-slate-200 hover:text-white transition-all cursor-pointer"
+                  >
+                    💡 "Severe throbbing headache for 2 days with nausea"
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleApplyPreset("High fever 102F with dry cough, body pain, and generalized weakness starting yesterday.")}
+                    className="p-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700 text-left text-slate-200 hover:text-white transition-all cursor-pointer"
+                  >
+                    💡 "High fever 102F with dry cough and body ache"
+                  </button>
+                </>
+              )}
+              {activeLang === "ml" && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => handleApplyPreset("3 ദിവസമായി കടുത്ത പനിയും വൻ ശ്വാസം മുട്ടലും അനുഭവപ്പെടുന്നു (3 days severe fever and breathlessness).")}
+                    className="p-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700 text-left text-slate-200 hover:text-white transition-all cursor-pointer"
+                  >
+                    💡 "3 ദിവസമായി കടുത്ത പനിയും ശ്വാസം മുട്ടലും"
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleApplyPreset("കഠിനമായ വയറുവേദനയും ഛർദ്ദിയും അനുഭവപ്പെടുന്നു, ഭക്ഷണം കഴിക്കാൻ സാധിക്കുന്നില്ല.")}
+                    className="p-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700 text-left text-slate-200 hover:text-white transition-all cursor-pointer"
+                  >
+                    💡 "കഠിനമായ വയറുവേദനയും ഛർദ്ദിയും"
+                  </button>
+                </>
+              )}
+              {activeLang === "hi" && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => handleApplyPreset("दो दिन से तेज़ बुखार, गले में दर्द और शरीर में बहुत कमजोरी है।")}
+                    className="p-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700 text-left text-slate-200 hover:text-white transition-all cursor-pointer"
+                  >
+                    💡 "दो दिन से तेज़ बुखार और गले में दर्द"
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleApplyPreset("छाती में हल्का दर्द और चलने पर सांस फूलने की शिकायत है।")}
+                    className="p-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700 text-left text-slate-200 hover:text-white transition-all cursor-pointer"
+                  >
+                    💡 "छाती में हल्का दर्द और सांस फूलना"
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+
           {/* Action Controls */}
-          <div className="flex flex-wrap items-center justify-center gap-3">
+          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
             {isRecording ? (
               <button
                 id="btn-stop-audio-recording"
@@ -406,7 +594,7 @@ export const AudioTranscribeModal: React.FC<AudioTranscribeModalProps> = ({
                 }}
               >
                 <Mic className="w-4 h-4" />
-                <span>{transcript ? "Record Again" : "Start Voice Recording"}</span>
+                <span>{transcript ? "Record Voice Again" : "Start Voice Recording"}</span>
               </button>
             )}
 
@@ -455,10 +643,11 @@ export const AudioTranscribeModal: React.FC<AudioTranscribeModalProps> = ({
           </button>
 
           <span className="text-[11px] text-slate-500 font-mono">
-            Model: <strong className="text-slate-300">gemini-3.5-transcribe</strong>
+            Engine: <strong className="text-slate-300">gemini-3.5-transcribe</strong>
           </span>
         </div>
       </div>
     </div>
   );
 };
+

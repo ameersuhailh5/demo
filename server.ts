@@ -54,7 +54,7 @@ app.get("/api/live/status", (_req, res) => {
   });
 });
 
-// Audio transcription endpoint using Gemini 3.5 Transcribe
+// Audio transcription endpoint using Gemini 3.5 Transcribe with robust model fallback
 app.post("/api/transcribe", async (req, res) => {
   try {
     const { audio, mimeType, language, context } = req.body;
@@ -71,52 +71,83 @@ app.post("/api/transcribe", async (req, res) => {
 
     const ai = getGenAI();
 
+    // Clean mimeType - strip parameters like ";codecs=opus" which cause Gemini API INVALID_ARGUMENT errors
+    const rawMime = mimeType || "audio/webm";
+    const cleanMimeType = rawMime.split(";")[0].trim() || "audio/webm";
+
     let langHint = "English, Malayalam (മലയാളം), or Hindi (हिन्दी)";
     if (language === "ml") langHint = "Malayalam (മലയാളം)";
     else if (language === "hi") langHint = "Hindi (हिन्दी)";
     else if (language === "en") langHint = "English";
 
     const promptText =
-      `You are a high-accuracy medical audio transcriber. Transcribe this audio recording verbatim. ` +
-      `The speaker may speak in ${langHint} or code-switch between them with clinical terms. ` +
-      `Guidelines: ` +
-      `1. Provide the exact, word-for-word transcript in the native script (Malayalam for Malayalam, Devanagari for Hindi, English for English). ` +
-      `2. Also detect the dominant language. ` +
-      `3. If spoken in Malayalam or Hindi, also provide an English translation for clinical record keeping. ` +
-      `Output format: If JSON is requested or naturally return the plain verbatim text as the main transcript.`;
+      `You are a high-accuracy medical audio transcriber. Transcribe this audio recording verbatim in ${langHint}.\n` +
+      `Guidelines:\n` +
+      `1. Provide the exact, word-for-word transcript in the native script (Malayalam for Malayalam, Devanagari for Hindi, English for English).\n` +
+      `2. If spoken in Malayalam or Hindi, you may also include an English translation in parentheses for medical record keeping.\n` +
+      `3. Return ONLY the transcribed text string verbatim. Do NOT add conversational intro, quotes, explanations, or meta-commentary.`;
 
-    const response = await ai.models.generateContent({
-      model: "gemini-3.5-transcribe",
-      contents: [
-        {
-          inlineData: {
-            data: audio,
-            mimeType: mimeType || "audio/webm",
-          },
-        },
-        promptText,
-      ],
-    });
+    // Try primary transcription model then fallbacks
+    const modelsToTry = [
+      "gemini-3.5-transcribe",
+      "gemini-3.8-flash",
+      "gemini-2.5-flash",
+      "gemini-3.1-pro-preview",
+    ];
 
-    const transcriptText =
-      response.text ||
-      response.candidates?.[0]?.content?.parts?.map((p: any) => p.text).join("") ||
-      "";
+    let transcriptText = "";
+    let usedModel = "";
+    let lastError: any = null;
 
-    console.log(`[Transcribe] Successfully transcribed audio using gemini-3.5-transcribe (${transcriptText.length} chars)`);
+    for (const modelName of modelsToTry) {
+      try {
+        const response = await ai.models.generateContent({
+          model: modelName,
+          contents: [
+            {
+              inlineData: {
+                data: audio,
+                mimeType: cleanMimeType,
+              },
+            },
+            promptText,
+          ],
+        });
+
+        const text =
+          response.text ||
+          response.candidates?.[0]?.content?.parts?.map((p: any) => p.text).join("") ||
+          "";
+
+        if (text && text.trim().length > 0) {
+          transcriptText = text.trim();
+          usedModel = modelName;
+          break;
+        }
+      } catch (err: any) {
+        console.warn(`[Transcribe] Model ${modelName} attempt note:`, err?.message || err);
+        lastError = err;
+      }
+    }
+
+    if (!transcriptText) {
+      throw lastError || new Error("Could not transcribe audio content.");
+    }
+
+    console.log(`[Transcribe] Successfully transcribed audio using ${usedModel} (${transcriptText.length} chars)`);
 
     return res.json({
       success: true,
-      transcript: transcriptText.trim(),
-      model: "gemini-3.5-transcribe",
+      transcript: transcriptText,
+      model: usedModel,
       detectedLanguage: language || "auto",
       timestamp: new Date().toISOString(),
     });
   } catch (err: any) {
-    console.error("[Transcribe] Error transcribing audio with gemini-3.5-transcribe:", err);
+    console.error("[Transcribe] Error transcribing audio:", err);
     return res.status(500).json({
       success: false,
-      error: err?.message || "Failed to transcribe audio with gemini-3.5-transcribe",
+      error: err?.message || "Failed to transcribe audio",
     });
   }
 });
